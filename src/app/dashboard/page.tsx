@@ -2,31 +2,31 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
       </div>
       
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Requests</h2>
-          <p className="mt-2 text-3xl font-bold">0</p>
+        <div className="card hover-lift">
+          <h2 className="text-sm font-medium text-muted-foreground">Total Requests</h2>
+          <p className="mt-2 text-3xl font-bold text-primary-600 dark:text-primary-400">0</p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Volunteers</h2>
-          <p className="mt-2 text-3xl font-bold">0</p>
+        <div className="card hover-lift">
+          <h2 className="text-sm font-medium text-muted-foreground">Active Volunteers</h2>
+          <p className="mt-2 text-3xl font-bold text-secondary-600 dark:text-secondary-400">0</p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">Animals Listed</h2>
-          <p className="mt-2 text-3xl font-bold">0</p>
+        <div className="card hover-lift">
+          <h2 className="text-sm font-medium text-muted-foreground">Animals Listed</h2>
+          <p className="mt-2 text-3xl font-bold text-accent-600 dark:text-accent-400">0</p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">Completed Rescues</h2>
-          <p className="mt-2 text-3xl font-bold">0</p>
+        <div className="card hover-lift">
+          <h2 className="text-sm font-medium text-muted-foreground">Completed Rescues</h2>
+          <p className="mt-2 text-3xl font-bold text-primary-600 dark:text-primary-400">0</p>
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-medium">Recent Activity</h2>
-        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">No recent activity</p>
+      <div className="card">
+        <h2 className="text-lg font-medium text-foreground">Recent Activity</h2>
+        <p className="mt-4 text-sm text-muted-foreground">No recent activity</p>
       </div>
     </div>
   );

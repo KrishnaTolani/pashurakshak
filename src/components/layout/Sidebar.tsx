@@ -15,7 +15,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+    <div className="sticky left-0 top-16 h-[calc(100vh-4rem)] w-64 border-r border-border dark:border-border-dark bg-card dark:bg-card-dark">
       <nav className="flex flex-col gap-1 p-4">
         {navigation.map((item) => {
           const isActive = pathname === item.href;
@@ -25,13 +25,13 @@ export function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
                 isActive
-                  ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-50'
-                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-50'
+                  ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-muted-dark dark:hover:text-foreground-dark'
               }`}
             >
-              <IconComponent className="h-5 w-5" />
+              <IconComponent className={`h-5 w-5 ${isActive ? 'text-primary-600 dark:text-primary-400' : ''}`} />
               {item.name}
             </Link>
           );
