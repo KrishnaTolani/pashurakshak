@@ -25,15 +25,19 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} ${montserrat.variable}`}>
         <Providers>
-          <Navbar />
-          <Sidebar />
-          <main className="min-h-screen pl-64 pt-16">
-            <div className="content-pattern min-h-[calc(100vh-4rem)]">
-              <div className="container mx-auto p-6">
-                {children}
-              </div>
+          <div className="flex min-h-screen flex-col">
+            <Navbar />
+            <div className="flex flex-1">
+              <Sidebar />
+              <main className="flex-1">
+                <div className="content-pattern min-h-full">
+                  <div className="container mx-auto p-6">
+                    {children}
+                  </div>
+                </div>
+              </main>
             </div>
-          </main>
+          </div>
         </Providers>
       </body>
     </html>
