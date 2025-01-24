@@ -31,9 +31,16 @@ export function Navbar() {
               size="sm"
               variant="ghost"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="text-muted-foreground hover:text-primary-500 dark:text-foreground-dark/60 dark:hover:text-theme-paw"
+              className="relative group p-2 hover:bg-transparent"
             >
-              {theme === 'dark' ? <FiSun className="h-5 w-5" /> : <FiMoon className="h-5 w-5" />}
+              <div className="absolute -inset-1 bg-gradient-to-r from-theme-nature to-primary-300 dark:from-theme-heart dark:to-theme-paw rounded-full opacity-30 group-hover:opacity-100 blur transition duration-500 group-hover:duration-200" />
+              <div className="relative flex items-center justify-center w-8 h-8 transition-transform duration-500 rotate-0 scale-100 group-hover:rotate-180">
+                {theme === 'dark' ? (
+                  <FiSun className="w-5 h-5 text-theme-heart group-hover:scale-110 transition-all duration-500" />
+                ) : (
+                  <FiMoon className="w-5 h-5 text-primary-600 group-hover:scale-110 transition-all duration-500" />
+                )}
+              </div>
             </Button>
           </div>
         </div>

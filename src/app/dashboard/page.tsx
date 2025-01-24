@@ -1,5 +1,6 @@
 import { FiActivity, FiHeart, FiUsers } from 'react-icons/fi';
 import { PiDogFill, PiPawPrintFill } from 'react-icons/pi';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   return (
@@ -21,9 +22,9 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="group relative">
+        <Link href="/requests" className="group relative transition-transform duration-300 hover:-translate-y-1">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-theme-nature to-primary-300 rounded-2xl blur opacity-30 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 dark:from-theme-heart dark:to-theme-heart/50" />
-          <div className="card relative hover-lift bg-white dark:bg-gradient-to-br dark:from-card-dark dark:to-card-dark/90">
+          <div className="card relative bg-white dark:bg-gradient-to-br dark:from-card-dark dark:to-card-dark/90">
             <div className="flex items-center gap-4">
               <div className="p-2 rounded-xl bg-primary-50 text-primary-600 dark:bg-theme-heart/10 dark:text-theme-heart">
                 <PiPawPrintFill className="w-6 h-6" />
@@ -34,11 +35,11 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        </div>
+        </Link>
 
-        <div className="group relative">
+        <Link href="/volunteers" className="group relative transition-transform duration-300 hover:-translate-y-1">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-theme-paw to-theme-nature rounded-2xl blur opacity-30 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 dark:from-theme-paw dark:to-theme-heart/50" />
-          <div className="card relative hover-lift bg-white dark:bg-gradient-to-br dark:from-card-dark dark:to-card-dark/90">
+          <div className="card relative bg-white dark:bg-gradient-to-br dark:from-card-dark dark:to-card-dark/90">
             <div className="flex items-center gap-4">
               <div className="p-2 rounded-xl bg-secondary-50 text-secondary-600 dark:bg-theme-paw/10 dark:text-theme-paw">
                 <FiUsers className="w-6 h-6" />
@@ -49,11 +50,11 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        </div>
+        </Link>
 
-        <div className="group relative">
+        <Link href="/animals" className="group relative transition-transform duration-300 hover:-translate-y-1">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-theme-heart to-theme-paw rounded-2xl blur opacity-30 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 dark:from-theme-nature dark:to-theme-paw/50" />
-          <div className="card relative hover-lift bg-white dark:bg-gradient-to-br dark:from-card-dark dark:to-card-dark/90">
+          <div className="card relative bg-white dark:bg-gradient-to-br dark:from-card-dark dark:to-card-dark/90">
             <div className="flex items-center gap-4">
               <div className="p-2 rounded-xl bg-accent-50 text-accent-600 dark:bg-theme-nature/10 dark:text-theme-nature">
                 <PiDogFill className="w-6 h-6" />
@@ -64,11 +65,11 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        </div>
+        </Link>
 
-        <div className="group relative">
+        <Link href="/requests" className="group relative transition-transform duration-300 hover:-translate-y-1">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-theme-heart to-theme-nature rounded-2xl blur opacity-30 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 dark:from-theme-heart dark:to-theme-paw/50" />
-          <div className="card relative hover-lift bg-white dark:bg-gradient-to-br dark:from-card-dark dark:to-card-dark/90">
+          <div className="card relative bg-white dark:bg-gradient-to-br dark:from-card-dark dark:to-card-dark/90">
             <div className="flex items-center gap-4">
               <div className="p-2 rounded-xl bg-red-50 text-theme-heart dark:bg-theme-heart/10 dark:text-theme-heart">
                 <FiHeart className="w-6 h-6" />
@@ -79,7 +80,7 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Recent Activity Section */}
