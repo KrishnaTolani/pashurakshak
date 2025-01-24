@@ -23,7 +23,7 @@ export default function RootLayout({
         <Providers>
           <Navbar />
           <Sidebar />
-          <main className="min-h-screen pl-64 pt-16">
+          <main className="min-h-screen pl-64 pt-16 bg-gradient-to-br from-background via-background to-secondary-50/30 dark:from-background-dark dark:via-background-dark dark:to-theme-nature/5">
             <div className="container mx-auto p-6">
               {children}
             </div>

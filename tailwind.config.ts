@@ -13,11 +13,11 @@ export default {
       colors: {
         background: {
           DEFAULT: "#F8F9FC",
-          dark: "#111827",
+          dark: "#1A1F2E",
         },
         foreground: {
           DEFAULT: "#1F2937",
-          dark: "#F9FAFB",
+          dark: "#EDF2F7",
         },
         primary: {
           DEFAULT: "#FF9843",
@@ -30,7 +30,8 @@ export default {
           600: "#FF7B14",
           700: "#E66400",
           800: "#B84F00",
-          900: "#8A3B00"
+          900: "#8A3B00",
+          dark: "#FFB067"
         },
         secondary: {
           DEFAULT: "#A8E6CF",
@@ -43,7 +44,8 @@ export default {
           600: "#4EA98A",
           700: "#3D856B",
           800: "#2C614E",
-          900: "#1B3D31"
+          900: "#1B3D31",
+          dark: "#7EEDC5"
         },
         accent: {
           DEFAULT: "#FFB5B5",
@@ -56,20 +58,27 @@ export default {
           600: "#FF2B2B",
           700: "#FC0000",
           800: "#C40000",
-          900: "#920000"
+          900: "#920000",
+          dark: "#FF9898"
         },
         card: {
           DEFAULT: "#FFFFFF",
-          dark: "#1F2937"
+          dark: "#242B3D"
         },
         muted: {
           DEFAULT: "#F3F4F6",
           foreground: "#6B7280",
-          dark: "#374151"
+          dark: "#2D364A"
         },
         border: {
           DEFAULT: "#E5E7EB",
-          dark: "#374151"
+          dark: "#303B55"
+        },
+        theme: {
+          "paw": "#FFD700",
+          "heart": "#FF6B6B",
+          "nature": "#66BB6A",
+          "sky": "#4FC3F7"
         }
       },
     },
