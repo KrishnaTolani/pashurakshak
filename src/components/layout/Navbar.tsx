@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
-import { Button } from '@heroui/react';
 import { RiSunLine, RiMoonClearLine } from 'react-icons/ri';
 
 export function Navbar() {
@@ -13,7 +12,7 @@ export function Navbar() {
       <div className="w-full">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-2 pl-6">
-            <Link href="/" className="brand-link group">
+            <Link href="/" prefetch={true} className="brand-link group">
               <div className="flex flex-col leading-none font-montserrat">
                 <span className="text-3xl font-black tracking-wide bg-gradient-to-r from-theme-nature via-primary-500 to-theme-heart bg-clip-text text-transparent dark:from-theme-paw dark:via-theme-sky dark:to-theme-heart">
                   PASHU
@@ -29,17 +28,17 @@ export function Navbar() {
           <div className="flex items-center gap-4 pr-6">
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="relative w-9 h-9 rounded-full flex items-center justify-center group transition-colors"
+              className="relative w-8 h-8 rounded-full flex items-center justify-center group"
+              aria-label="Toggle theme"
             >
-              <div className="absolute inset-0 rounded-full bg-primary-50 dark:bg-theme-heart/10 transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
-              <div className="relative transition-all duration-500 ease-spring">
+              <div className="absolute inset-0 rounded-full bg-primary-50/80 dark:bg-theme-heart/20 opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
+              <div className="relative">
                 {theme === 'dark' ? (
-                  <RiSunLine className="w-5 h-5 text-theme-heart transition-all duration-300 group-hover:scale-110" />
+                  <RiSunLine className="w-5 h-5 text-theme-heart transform transition-transform duration-150 ease-out group-hover:scale-110" />
                 ) : (
-                  <RiMoonClearLine className="w-5 h-5 text-primary-600 transition-all duration-300 group-hover:scale-110" />
+                  <RiMoonClearLine className="w-5 h-5 text-primary-600 transform transition-transform duration-150 ease-out group-hover:scale-110" />
                 )}
               </div>
-              <span className="sr-only">Toggle theme</span>
             </button>
           </div>
         </div>
