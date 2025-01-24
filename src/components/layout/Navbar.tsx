@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { Button } from '@heroui/react';
-import { FiSun, FiMoon } from 'react-icons/fi';
+import { RiSunLine, RiMoonClearLine } from 'react-icons/ri';
 
 export function Navbar() {
   const { theme, setTheme } = useTheme();
@@ -27,21 +27,20 @@ export function Navbar() {
             <span className="text-sm font-medium text-muted-foreground/70 dark:text-foreground-dark/50">Admin</span>
           </div>
           <div className="flex items-center gap-4 pr-6">
-            <Button
-              size="sm"
-              variant="ghost"
+            <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="relative group p-2 hover:bg-transparent"
+              className="relative w-9 h-9 rounded-full flex items-center justify-center group transition-colors"
             >
-              <div className="absolute -inset-1 bg-gradient-to-r from-theme-nature to-primary-300 dark:from-theme-heart dark:to-theme-paw rounded-full opacity-30 group-hover:opacity-100 blur transition duration-500 group-hover:duration-200" />
-              <div className="relative flex items-center justify-center w-8 h-8 transition-transform duration-500 rotate-0 scale-100 group-hover:rotate-180">
+              <div className="absolute inset-0 rounded-full bg-primary-50 dark:bg-theme-heart/10 transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
+              <div className="relative transition-all duration-500 ease-spring">
                 {theme === 'dark' ? (
-                  <FiSun className="w-5 h-5 text-theme-heart group-hover:scale-110 transition-all duration-500" />
+                  <RiSunLine className="w-5 h-5 text-theme-heart transition-all duration-300 group-hover:scale-110" />
                 ) : (
-                  <FiMoon className="w-5 h-5 text-primary-600 group-hover:scale-110 transition-all duration-500" />
+                  <RiMoonClearLine className="w-5 h-5 text-primary-600 transition-all duration-300 group-hover:scale-110" />
                 )}
               </div>
-            </Button>
+              <span className="sr-only">Toggle theme</span>
+            </button>
           </div>
         </div>
       </div>
