@@ -11,7 +11,7 @@ export default function VolunteersPage() {
         <div className="flex flex-col gap-2">
           <h2 className="text-lg font-medium text-foreground dark:text-foreground-dark">Volunteer Management</h2>
           <p className="text-sm text-muted-foreground dark:text-foreground-dark/60">
-            Volunteer coordination system coming soon. Here you'll be able to:
+            Here&apos;s where you&apos;ll manage all volunteer information.
           </p>
           <ul className="list-disc list-inside text-sm text-muted-foreground dark:text-foreground-dark/60 space-y-1 ml-4">
             <li>Manage volunteer profiles and availability</li>

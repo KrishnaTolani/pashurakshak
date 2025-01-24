@@ -11,7 +11,7 @@ export default function AnimalsPage() {
         <div className="flex flex-col gap-2">
           <h2 className="text-lg font-medium text-foreground dark:text-foreground-dark">Animal Registry</h2>
           <p className="text-sm text-muted-foreground dark:text-foreground-dark/60">
-            Animal management system coming soon. Here you'll be able to:
+            Animal management system coming soon. Here&apos;s where you&apos;ll find all the animals:
           </p>
           <ul className="list-disc list-inside text-sm text-muted-foreground dark:text-foreground-dark/60 space-y-1 ml-4">
             <li>Maintain profiles of rescued animals</li>

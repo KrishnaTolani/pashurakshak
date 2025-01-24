@@ -11,7 +11,7 @@ export default function RequestsPage() {
         <div className="flex flex-col gap-2">
           <h2 className="text-lg font-medium text-foreground dark:text-foreground-dark">Incoming Requests</h2>
           <p className="text-sm text-muted-foreground dark:text-foreground-dark/60">
-            Request management system coming soon. Here you'll be able to:
+            Request management system coming soon. Here&apos;s where you&apos;ll manage all rescue requests:
           </p>
           <ul className="list-disc list-inside text-sm text-muted-foreground dark:text-foreground-dark/60 space-y-1 ml-4">
             <li>View and manage incoming rescue requests</li>
