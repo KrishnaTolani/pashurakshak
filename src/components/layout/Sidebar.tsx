@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { FiHome, FiUsers, FiList } from 'react-icons/fi';
+import { FiHome, FiUsers } from 'react-icons/fi';
 import { PiDogFill, PiPawPrintFill } from 'react-icons/pi';
 import { useEffect } from 'react';
 
