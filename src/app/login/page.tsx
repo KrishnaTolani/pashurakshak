@@ -33,8 +33,8 @@ export default function LoginPage() {
 
   if (showForgotPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-full max-w-md space-y-8 relative">
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="w-full max-w-md relative">
           {/* Background Effects */}
           <div className="absolute -top-12 -right-8 w-32 h-32 bg-gradient-to-br from-theme-nature/20 to-transparent rounded-full blur-3xl dark:from-theme-heart/10" />
           <div className="absolute -bottom-12 -left-8 w-32 h-32 bg-gradient-to-br from-theme-paw/20 to-transparent rounded-full blur-3xl dark:from-theme-paw/10" />
@@ -137,8 +137,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-md space-y-8 relative">
+    <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
+      <div className="w-full max-w-md relative">
         {/* Background Effects */}
         <div className="absolute -top-12 -right-8 w-32 h-32 bg-gradient-to-br from-theme-nature/20 to-transparent rounded-full blur-3xl dark:from-theme-heart/10" />
         <div className="absolute -bottom-12 -left-8 w-32 h-32 bg-gradient-to-br from-theme-paw/20 to-transparent rounded-full blur-3xl dark:from-theme-paw/10" />
