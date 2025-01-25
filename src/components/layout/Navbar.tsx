@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { RiSunLine, RiMoonClearLine } from 'react-icons/ri';
+import { FiLogOut } from 'react-icons/fi';
 
 export function Navbar() {
   const { theme, setTheme } = useTheme();
@@ -40,6 +41,13 @@ export function Navbar() {
                 )}
               </div>
             </button>
+            <Link 
+              href="/login" 
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors duration-200 dark:bg-theme-heart/10 dark:text-theme-heart dark:hover:bg-theme-heart/20"
+            >
+              <FiLogOut className="w-5 h-5" />
+              <span>Logout</span>
+            </Link>
           </div>
         </div>
       </div>

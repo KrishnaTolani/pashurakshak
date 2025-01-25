@@ -1,3 +1,5 @@
+'use client';
+
 import { FiActivity, FiHeart, FiUsers } from 'react-icons/fi';
 import { PiDogFill, PiPawPrintFill } from 'react-icons/pi';
 import Link from 'next/link';
