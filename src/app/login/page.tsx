@@ -47,7 +47,7 @@ export default function LoginPage() {
                 <div className="text-center">
                   <h2 className="text-2xl font-bold text-foreground dark:text-foreground-dark mb-4">Check Your Email</h2>
                   <p className="text-muted-foreground dark:text-foreground-dark/60 mb-6">
-                    We've sent a magic link to <strong>{forgotEmail}</strong>. Please check your inbox and click the link to reset your password.
+                    We&apos;ve sent a magic link to <strong>{forgotEmail}</strong>. Please check your inbox and click the link to reset your password.
                   </p>
                   <div className="space-y-4">
                     {timeLeft > 0 ? (
@@ -84,7 +84,7 @@ export default function LoginPage() {
                       Reset Password
                     </h1>
                     <p className="mt-2 text-sm text-muted-foreground dark:text-foreground-dark/60">
-                      Enter your email address and we'll send you a magic link to reset your password.
+                      Enter your email address and we&apos;ll send you a magic link to reset your password.
                     </p>
                   </div>
 
@@ -244,7 +244,7 @@ export default function LoginPage() {
 
             {/* Register Link */}
             <p className="mt-6 text-center text-sm text-muted-foreground dark:text-foreground-dark/60">
-              First time here?{' '}
+              First time here?&nbsp;
               <Link 
                 href="/register" 
                 prefetch={true}
