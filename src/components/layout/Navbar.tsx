@@ -15,12 +15,14 @@ export function Navbar() {
           <div className="flex items-center gap-2 pl-6">
             <Link href="/" prefetch={true} className="brand-link group">
               <div className="flex flex-col leading-none font-montserrat">
-                <span className="text-3xl font-black tracking-wide bg-gradient-to-r from-theme-nature via-primary-500 to-theme-heart bg-clip-text text-transparent dark:from-theme-paw dark:via-theme-sky dark:to-theme-heart">
-                  PASHU
-                </span>
-                <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-primary-600 via-theme-paw to-theme-heart bg-clip-text text-transparent dark:from-theme-heart dark:via-theme-nature dark:to-theme-paw -mt-1">
-                  RAKSHAK
-                </span>
+                <div className="flex flex-col bg-gradient-to-br from-theme-nature via-primary-500 to-theme-heart bg-clip-text text-transparent dark:from-theme-paw dark:via-theme-sky dark:to-theme-heart">
+                  <span className="text-3xl font-black tracking-wide">
+                    PASHU
+                  </span>
+                  <span className="text-2xl font-extrabold tracking-tight -mt-1">
+                    RAKSHAK
+                  </span>
+                </div>
               </div>
             </Link>
             <div className="h-8 w-[1px] bg-border dark:bg-border-dark mx-2" />
