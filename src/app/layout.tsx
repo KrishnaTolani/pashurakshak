@@ -12,7 +12,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Pashu Rakshak Admin",
+  title: "Pashu Rakshak Admin Portal",
   description: "Admin dashboard for NGOs to manage animal rescue operations",
 };
 
