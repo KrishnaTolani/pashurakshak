@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { FiHome, FiUsers } from 'react-icons/fi';
 import { PiDogFill, PiPawPrintFill } from 'react-icons/pi';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', Icon: FiHome },
@@ -24,6 +24,13 @@ export function Sidebar() {
     });
   }, [router]);
 
+  // Handle hover-based prefetching
+  const handleHover = useCallback((href: string) => {
+    router.prefetch(href);
+    // In future: Trigger data prefetch for the route
+    // prefetchRouteData(href);
+  }, [router]);
+
   return (
     <div className="sticky left-0 top-16 h-[calc(100vh-4rem)] w-64 border-r border-border/50 bg-gradient-to-b from-white via-white to-theme-nature/5 dark:border-border-dark dark:from-card-dark dark:via-card-dark dark:to-theme-heart/5">
       <nav className="flex flex-col gap-2 p-6">
@@ -36,6 +43,7 @@ export function Sidebar() {
               key={item.name}
               href={item.href}
               prefetch={true}
+              onMouseEnter={() => handleHover(item.href)}
               className={`group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 ${
                 isActive
                   ? 'bg-gradient-to-r from-theme-nature/20 to-primary-100 text-primary-700 shadow-sm dark:from-theme-heart/20 dark:to-theme-heart/5 dark:text-theme-heart'
