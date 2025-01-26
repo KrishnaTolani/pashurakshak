@@ -3,7 +3,7 @@ import { FiAlertTriangle, FiClock, FiSearch } from 'react-icons/fi';
 
 export default function NotFound() {
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] p-8 relative z-0">
+    <div className="flex items-center justify-center min-h-[calc(100vh-7rem)] p-8 relative z-0">
       <div className="relative max-w-3xl w-full">
 
         <div className="relative p-8 bg-white dark:bg-card-dark rounded-2xl border-2 border-primary-200/80 dark:border-theme-heart/10 shadow-xl backdrop-blur-sm">
