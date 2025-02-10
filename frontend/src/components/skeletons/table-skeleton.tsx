@@ -13,9 +13,9 @@ export function TableSkeleton({
 }: TableSkeletonProps) {
   return (
     <div className="w-full">
-      <div className="rounded-xl border-2 border-muted/30 dark:border-muted-dark/30 overflow-hidden">
+      <div className="rounded-xl border-2 border-gray-200 dark:border-muted-dark/30 overflow-hidden">
         {showHeader && (
-          <div className="bg-muted/20 dark:bg-muted-dark/20 p-4">
+          <div className="bg-gray-100 dark:bg-muted-dark/20 p-4">
             <div className="flex items-center justify-between">
               <Skeleton className="h-8 w-32" />
               <div className="flex items-center gap-4">
@@ -26,7 +26,7 @@ export function TableSkeleton({
           </div>
         )}
         
-        <div className="divide-y divide-muted/30 dark:divide-muted-dark/30">
+        <div className="divide-y divide-gray-200 dark:divide-muted-dark/30">
           {Array.from({ length: rows }).map((_, rowIndex) => (
             <div
               key={rowIndex}

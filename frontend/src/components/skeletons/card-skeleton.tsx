@@ -26,7 +26,7 @@ export function CardSkeleton({
             <Skeleton className="h-4 w-4/6" />
           </div>
           {showFooter && (
-            <div className="flex items-center justify-between pt-4 border-t border-muted/30 dark:border-muted-dark/30">
+            <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-muted-dark/30">
               <Skeleton className="h-9 w-24" />
               <Skeleton className="h-9 w-24" />
             </div>
@@ -62,7 +62,7 @@ export function CardSkeleton({
           <Skeleton className="h-4 w-4/6" />
         </div>
         {showFooter && (
-          <div className="flex items-center gap-4 pt-4 border-t border-muted/30 dark:border-muted-dark/30">
+          <div className="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-muted-dark/30">
             <Skeleton className="h-9 w-24" />
             <Skeleton className="h-9 w-24" />
           </div>

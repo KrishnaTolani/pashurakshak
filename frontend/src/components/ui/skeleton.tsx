@@ -13,10 +13,10 @@ export function Skeleton({
   return (
     <div
       className={cn(
-        "animate-pulse bg-muted/50 dark:bg-muted-dark/50 rounded-md",
+        "animate-pulse bg-gray-300/70 dark:bg-muted-dark/50 rounded-md",
         {
           "rounded-full": variant === "circle",
-          "rounded-xl border-2 border-muted/30 dark:border-muted-dark/30": variant === "card",
+          "rounded-xl border-2 border-gray-300 dark:border-muted-dark/30": variant === "card",
         },
         className
       )}
