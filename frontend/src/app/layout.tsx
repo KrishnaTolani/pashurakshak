@@ -25,13 +25,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} ${montserrat.variable}`}>
         <Providers>
-          <div className="flex min-h-screen flex-col overflow-x-hidden">
+          <div className="flex h-screen flex-col overflow-x-hidden">
             <Navbar />
-            <div className="flex flex-1">
+            <div className="flex flex-1 overflow-hidden">
               <Sidebar />
-              <main className="flex-1 w-0">
-                <div className="content-pattern min-h-full">
-                  <div className="container mx-auto p-6 max-w-[100vw]">
+              <main className="flex-1 min-w-0 overflow-auto">
+                <div className="content-pattern h-full">
+                  <div className="container mx-auto p-6">
                     {children}
                   </div>
                 </div>

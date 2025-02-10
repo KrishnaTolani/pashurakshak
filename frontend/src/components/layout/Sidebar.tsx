@@ -32,8 +32,8 @@ export function Sidebar() {
   }, [router]);
 
   return (
-    <div className="sticky left-0 top-16 h-[calc(100vh-4rem)] w-64 border-r border-border/50 bg-gradient-to-b from-white via-white to-theme-nature/5 dark:border-border-dark dark:from-card-dark dark:via-card-dark dark:to-theme-heart/5">
-      <nav className="flex flex-col gap-2 p-6">
+    <div className="h-full w-64 border-r border-border/50 bg-gradient-to-b from-white via-white to-theme-nature/5 dark:border-border-dark dark:from-card-dark dark:via-card-dark dark:to-theme-heart/5 flex flex-col">
+      <nav className="flex-1 flex flex-col gap-2 p-6 overflow-y-auto">
         {navigation.map((item) => {
           const isActive = pathname === item.href;
           const IconComponent = item.Icon;
@@ -62,7 +62,7 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="absolute bottom-0 left-0 right-0 p-6">
+      <div className="p-6">
         <div className="rounded-xl bg-gradient-to-r from-theme-nature/20 to-primary-50 p-4 dark:from-theme-heart/20 dark:to-theme-heart/5">
           <p className="text-xs font-medium text-primary-700 dark:text-theme-heart">Need Help?</p>
           <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">Contact our support team for assistance with the admin panel.</p>
