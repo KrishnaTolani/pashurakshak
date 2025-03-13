@@ -1,32 +1,52 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
 
-const protect = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
-      token = req.headers.authorization.split(' ')[1];
-
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      req.user = await User.findById(decoded.id).select('-password');
-
-      next();
-    } catch (error) {
-      res.status(401).json({
+module.exports = (req, res, next) => {
+  try {
+    // Get token from header
+    const authHeader = req.header('Authorization');
+    if (!authHeader) {
+      return res.status(401).json({
         success: false,
-        message: 'Not authorized, token failed'
+        message: 'No authentication token, access denied'
       });
     }
-  }
 
-  if (!token) {
-    res.status(401).json({
+    // Verify token
+    const token = authHeader.replace('Bearer ', '');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    
+    if (!decoded || decoded.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to access this resource'
+      });
+    }
+
+    // Add user info to request
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role
+    };
+    
+    next();
+  } catch (error) {
+    console.error('Auth error:', error);
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token'
+      });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token has expired'
+      });
+    }
+    res.status(500).json({
       success: false,
-      message: 'Not authorized, no token'
+      message: 'Server error during authentication'
     });
   }
 };
-
-module.exports = { protect };

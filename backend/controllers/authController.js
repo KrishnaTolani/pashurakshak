@@ -83,11 +83,11 @@ const { sendPasswordResetEmail } = require('../utils/email');
  */
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(409).json({
+      return res.status(400).json({
         success: false,
         message: 'User already exists'
       });
@@ -96,7 +96,8 @@ const register = async (req, res) => {
     const user = await User.create({
       name,
       email,
-      password
+      password,
+      role: role === 'admin' ? 'admin' : 'user'
     });
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -105,17 +106,20 @@ const register = async (req, res) => {
 
     res.status(201).json({
       success: true,
+      message: 'User registered successfully',
       data: {
-        _id: user._id,
+        id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
         token
       }
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Error in user registration',
+      error: error.message
     });
   }
 };
@@ -150,16 +154,8 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
-    }
-
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
+    const user = await User.findOne({ email }).select('+password');
+    if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -170,19 +166,21 @@ const login = async (req, res) => {
       expiresIn: '30d'
     });
 
-    res.json({
+    res.status(200).json({
       success: true,
       data: {
-        _id: user._id,
+        id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
         token
       }
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Error in login',
+      error: error.message
     });
   }
 };
