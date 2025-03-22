@@ -1,63 +1,104 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const swaggerJsDoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
 const dotenv = require('dotenv');
-const connectDB = require('./config/db');
 const path = require('path');
+const adminRoutes = require('./routes/adminRoutes');
+const ngoRoutes = require('./routes/ngoRoutes');
 
 dotenv.config();
-
-connectDB();
 
 const app = express();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  credentials: true
+}));
 
-const swaggerOptions = {
-  definition: {
-    openapi: '3.1.4',
-    info: {
-      title: 'User Authentication API',
-      version: '1.0.0',
-      description: 'API documentation for user authentication',
-    },
-    servers: [
-      {
-        url: `http://localhost:${process.env.PORT || 3000}`,
-      },
-    ],
-  },
-  apis: ['./controllers/*.js'],
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Function to drop all problematic indexes
+async function dropProblematicIndexes() {
+  try {
+    const ngosCollection = mongoose.connection.collection('ngos');
+    
+    // Get all indexes
+    const indexes = await ngosCollection.indexes();
+    console.log('Current indexes:', indexes);
+
+    // Drop problematic indexes
+    const indexesToDrop = ['codeNo_1', 'certificateNumber_1', 'recognitionNumber_1'];
+    for (const indexName of indexesToDrop) {
+      try {
+        await ngosCollection.dropIndex(indexName);
+        console.log(`Dropped index: ${indexName}`);
+      } catch (error) {
+        console.log(`Index ${indexName} not found or already dropped`);
+      }
+    }
+
+    // Drop the entire collection and recreate it
+    try {
+      await ngosCollection.drop();
+      console.log('Collection dropped and will be recreated');
+    } catch (error) {
+      console.log('Collection not found or already dropped');
+    }
+  } catch (error) {
+    console.error('Error handling indexes:', error);
+  }
+}
+
+// MongoDB connection with retry logic
+const connectWithRetry = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/pashurakshak', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log('Connected to MongoDB');
+    
+    // Drop problematic indexes after connection
+    await dropProblematicIndexes();
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    process.exit(1);
+  }
 };
 
-const swaggerDocs = swaggerJsDoc(swaggerOptions);
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+// Connect to MongoDB before starting the server
+connectWithRetry();
 
-app.get('/reset-password/:token', (req, res) => {
-  res.render('resetPasswordPage');
-});
-
+// Routes
+console.log('Mounting routes...');
 app.use('/api/auth', require('./routes/authRoutes'));
+console.log('Auth routes mounted');
+app.use('/api/admin', adminRoutes);
+console.log('Admin routes mounted');
+app.use('/api/ngo', ngoRoutes);
+console.log('NGO routes mounted');
 
 app.get('/', (req, res) => {
   res.json({ message: 'API is running' });
 });
 
+// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Error:', err);
   res.status(500).json({
     success: false,
-    message: 'Something went wrong!'
+    message: 'Something went wrong!',
+    error: err.message
   });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+// Start server
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
