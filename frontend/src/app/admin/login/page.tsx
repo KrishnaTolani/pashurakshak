@@ -24,7 +24,7 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3004';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       console.log('Attempting login with URL:', `${apiUrl}/api/admin/login`);
       
       const response = await axios.post(`${apiUrl}/api/admin/login`, {

@@ -56,7 +56,7 @@ async function dropProblematicIndexes() {
 // MongoDB connection with retry logic
 const connectWithRetry = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/pashurakshak', {
+    await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });

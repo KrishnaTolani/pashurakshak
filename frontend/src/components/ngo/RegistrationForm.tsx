@@ -23,6 +23,9 @@ interface RegistrationFormData {
   website: string;
   registrationCertificate: File | null;
   taxExemptionCertificate: File | null;
+  district?: string;
+  address?: string;
+  phone?: string;
 }
 
 const variants: Variants = {
@@ -89,7 +92,7 @@ const RegistrationForm = () => {
   const onSubmit = async (data: RegistrationFormData) => {
     try {
       setIsSubmitting(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
       // Create FormData object for file uploads
       const formDataToSend = new FormData();
@@ -483,50 +486,48 @@ const RegistrationForm = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
                 <input
                   type="text"
-                  {...register('contactPerson.name', { required: 'Contact person name is required' })}
+                  {...register('contactPersonName', { required: 'Contact person name is required' })}
                   className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
                   placeholder="Enter contact person name"
                 />
-                {errors.contactPerson?.name && <p className="mt-1 text-sm text-theme-heart">{errors.contactPerson.name.message}</p>}
+                {errors.contactPersonName && <p className="mt-1 text-sm text-theme-heart">{errors.contactPersonName.message}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Designation</label>
                 <input
                   type="text"
-                  {...register('contactPerson.designation', { required: 'Designation is required' })}
                   className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
                   placeholder="Enter designation"
                 />
-                {errors.contactPerson?.designation && <p className="mt-1 text-sm text-theme-heart">{errors.contactPerson.designation.message}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone</label>
                 <input
                   type="tel"
-                  {...register('contactPerson.phone', {
+                  {...register('contactPersonPhone', {
                     required: 'Contact person phone is required',
                     pattern: { value: /^[0-9]{10}$/, message: 'Enter valid 10-digit phone number' }
                   })}
                   className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
                   placeholder="Enter contact person phone"
                 />
-                {errors.contactPerson?.phone && <p className="mt-1 text-sm text-theme-heart">{errors.contactPerson.phone.message}</p>}
+                {errors.contactPersonPhone && <p className="mt-1 text-sm text-theme-heart">{errors.contactPersonPhone.message}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
                 <input
                   type="email"
-                  {...register('contactPerson.email', {
+                  {...register('contactPersonEmail', {
                     required: 'Contact person email is required',
                     pattern: { value: /^\S+@\S+\.\S+$/, message: 'Enter valid email' }
                   })}
                   className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
                   placeholder="Enter contact person email"
                 />
-                {errors.contactPerson?.email && <p className="mt-1 text-sm text-theme-heart">{errors.contactPerson.email.message}</p>}
+                {errors.contactPersonEmail && <p className="mt-1 text-sm text-theme-heart">{errors.contactPersonEmail.message}</p>}
               </div>
             </div>
           </motion.div>

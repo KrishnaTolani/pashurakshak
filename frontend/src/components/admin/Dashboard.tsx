@@ -40,7 +40,7 @@ export default function AdminDashboard() {
   const fetchNGOs = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get('http://localhost:3000/api/ngo/pending', {
+      const response = await axios.get('${process.env.NEXT_PUBLIC_API_URL}/api/ngo/pending', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNgos(response.data);
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
       setActionInProgress(id);
       const token = localStorage.getItem('adminToken');
       await axios.patch(
-        `http://localhost:3000/api/ngo/${id}/approve`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/ngo/${id}/approve`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -79,7 +79,7 @@ export default function AdminDashboard() {
       setActionInProgress(selectedNgoId);
       const token = localStorage.getItem('adminToken');
       await axios.patch(
-        `http://localhost:3000/api/ngo/${selectedNgoId}/reject`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/ngo/${selectedNgoId}/reject`,
         { reason: rejectionReason },
         { headers: { Authorization: `Bearer ${token}` } }
       );
