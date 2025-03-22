@@ -63,52 +63,28 @@ router.get('/verify', (req, res) => {
   });
 });
 
-// Get all NGOs
-router.get('/ngos', async (req, res) => {
+// Get all NGO registrations
+router.get('/registrations', async (req, res) => {
   try {
     const ngos = await Ngo.find()
       .sort({ createdAt: -1 })
-      .select('name email status organizationType state createdAt');
+      .select('name email status organizationType address.state createdAt');
 
     res.json({
       success: true,
-      data: ngos
+      registrations: ngos
     });
   } catch (error) {
-    console.error('Error fetching NGOs:', error);
+    console.error('Error fetching registrations:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching NGOs'
+      message: 'Error fetching registrations'
     });
   }
 });
 
-// Get single NGO details
-router.get('/ngo/:id', async (req, res) => {
-  try {
-    const ngo = await Ngo.findById(req.params.id);
-    if (!ngo) {
-      return res.status(404).json({
-        success: false,
-        message: 'NGO not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: ngo
-    });
-  } catch (error) {
-    console.error('Error fetching NGO:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching NGO details'
-    });
-  }
-});
-
-// Update NGO status
-router.patch('/ngo/:id/status', async (req, res) => {
+// Update NGO registration status
+router.put('/registrations/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
