@@ -1,96 +1,71 @@
 const express = require('express');
 const router = express.Router();
 const { register, login, forgotPassword, resetPassword } = require('../controllers/authController');
-const Ngo = require('../models/Ngo');
+const User = require('../models/User');
 const emailService = require('../utils/emailService');
 const jwt = require('jsonwebtoken');
 
-// NGO Registration
+// User Registration (was NGO Registration before)
 router.post('/register', async (req, res) => {
   try {
     const {
       name,
       email,
       password,
-      contactPerson,
-      organizationType,
-      registrationNumber,
-      address,
-      focusAreas,
-      website,
-      documents
+      phone
     } = req.body;
 
-    // Check if NGO already exists
-    const existingNgo = await Ngo.findOne({ email });
-    if (existingNgo) {
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'An NGO with this email already exists'
+        message: 'A user with this email already exists'
       });
     }
 
-    // Create new NGO
-    const ngo = await Ngo.create({
+    // Create new user
+    const user = await User.create({
       name,
       email,
       password,
-      contactPerson,
-      organizationType,
-      registrationNumber,
-      address,
-      focusAreas,
-      website,
-      documents,
-      status: 'pending'
+      phone
     });
-
-    // Send registration confirmation email
-    await emailService.sendRegistrationEmail(email, name, ngo._id);
 
     res.status(201).json({
       success: true,
-      message: 'NGO registration submitted successfully',
+      message: 'User registered successfully',
       data: {
-        id: ngo._id,
-        name: ngo.name,
-        email: ngo.email,
-        status: ngo.status
+        id: user._id,
+        name: user.name,
+        email: user.email
       }
     });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error in NGO registration',
+      message: 'Error in user registration',
       error: error.message
     });
   }
 });
 
-// NGO Login
+// User Login (was NGO Login before)
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const ngo = await Ngo.findOne({ email }).select('+password');
-    if (!ngo || !(await ngo.comparePassword(password))) {
+    const user = await User.findOne({ email }).select('+password');
+    if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
     }
 
-    // Check if NGO is approved
-    if (ngo.status !== 'approved') {
-      return res.status(403).json({
-        success: false,
-        message: 'Your registration is pending approval'
-      });
-    }
-
     const token = jwt.sign(
-      { id: ngo._id, role: 'ngo' },
+      { id: user._id, role: 'user' },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -100,11 +75,10 @@ router.post('/login', async (req, res) => {
       message: 'Login successful',
       data: {
         token,
-        ngo: {
-          id: ngo._id,
-          name: ngo.name,
-          email: ngo.email,
-          status: ngo.status
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email
         }
       }
     });

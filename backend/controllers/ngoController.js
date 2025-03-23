@@ -14,80 +14,56 @@ const generateToken = (id) => {
 exports.registerNgo = async (req, res) => {
   try {
     const {
-      // Organization Details
       name,
-      codeNo,
-      certificateNumber,
-      recognitionYear,
-      
-      // Location Details
-      state,
-      district,
-      address,
-      pincode,
-      
-      // Contact Details
       email,
-      phone,
-      alternatePhone,
-      website,
-      
-      // Contact Person Details
+      password,
       contactPerson,
-      
-      // Organization Type and Focus
       organizationType,
+      registrationNumber,
+      address,
       focusAreas,
-      
-      // Documents
-      registrationCertificate,
-      panCard
+      website,
+      documents
     } = req.body;
 
     // Check if NGO already exists
-    const existingNgo = await Ngo.findOne({ 
-      $or: [
-        { email },
-        { codeNo },
-        { certificateNumber }
-      ] 
-    });
-
+    const existingNgo = await Ngo.findOne({ email });
+    
     if (existingNgo) {
       return res.status(400).json({
         success: false,
-        message: 'NGO with this email, code number, or certificate number already exists'
+        message: 'NGO with this email already exists'
       });
     }
 
-    // Validate recognition year
-    const currentYear = new Date().getFullYear();
-    if (recognitionYear < 1900 || recognitionYear > currentYear) {
+    // Validate documents - ensure they have URLs to Cloudinary
+    if (!documents || !documents.registrationCertificate) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid recognition year'
+        message: 'Registration certificate URL is required'
       });
     }
 
-    // Create NGO without password (will be set upon approval)
+    // Validate registration certificate URL is from Cloudinary
+    if (!documents.registrationCertificate.includes('cloudinary.com')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid Cloudinary URL for the registration certificate'
+      });
+    }
+
+    // Create NGO
     const ngo = await Ngo.create({
       name,
-      codeNo,
-      certificateNumber,
-      recognitionYear,
-      state,
-      district,
-      address,
-      pincode,
       email,
-      phone,
-      alternatePhone,
-      website,
+      password,
       contactPerson,
       organizationType,
+      registrationNumber,
+      address,
       focusAreas,
-      registrationCertificate,
-      panCard,
+      website,
+      documents,
       status: 'pending'
     });
 
@@ -96,15 +72,12 @@ exports.registerNgo = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'NGO registration request submitted successfully',
+      message: 'NGO registration submitted successfully',
       data: {
-        registrationId: ngo._id,
-        name: name,
-        email: email,
-        phone: phone,
-        state: state,
-        district: district,
-        status: 'pending'
+        id: ngo._id,
+        name: ngo.name,
+        email: ngo.email,
+        status: ngo.status
       }
     });
   } catch (error) {
