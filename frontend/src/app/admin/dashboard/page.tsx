@@ -110,8 +110,8 @@ export default function AdminDashboard() {
       setIsLoading(true);
       const token = localStorage.getItem('adminToken');
       
-      // Using the same endpoint for individual NGO details
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/registrations/${id}`, {
+      // Use the correct admin/ngo/:id endpoint as per API_COMPLETED.md
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/ngo/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

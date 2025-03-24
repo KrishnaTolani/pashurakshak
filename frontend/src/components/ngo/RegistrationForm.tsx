@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import { motion, Variants } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import { CldUploadWidget } from 'next-cloudinary';
+import { useDropzone } from 'react-dropzone';
 
 interface RegistrationFormData {
   name: string;
@@ -54,12 +54,6 @@ interface NGORegistrationRequest {
   };
 }
 
-interface CloudinaryResult {
-  info: {
-    secure_url: string;
-  };
-}
-
 const variants: Variants = {
   hidden: { opacity: 0, x: 20 },
   visible: { opacity: 1, x: 0 },
@@ -72,6 +66,143 @@ const progressVariants: Variants = {
     width: `${progress}%`,
     transition: { duration: 0.3 }
   })
+};
+
+// Add a FileUploader component
+interface FileUploaderProps {
+  onFileUpload: (url: string) => void;
+  label: string;
+  documentType: 'registration' | 'tax';
+  required?: boolean;
+}
+
+const FileUploader: React.FC<FileUploaderProps> = ({
+  onFileUpload,
+  label,
+  documentType,
+  required = false,
+}) => {
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) {
+      setUploadError('No file selected');
+      toast.error('Please select a file to upload');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setUploadError(null);
+      
+      const file = acceptedFiles[0];
+      
+      // Format a unique filename with a prefix based on document type
+      const prefix = documentType === 'registration' ? 'reg_cert' : 'tax_cert';
+      const nameInput = document.getElementById('name') as HTMLInputElement;
+      const ngoName = nameInput?.value || 'ngo';
+      const formattedNgoName = ngoName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      
+      // Create form data for upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileName', `${prefix}_${formattedNgoName}_${Date.now()}`);
+      formData.append('folder', 'ngo_documents');
+      
+      console.log(`Uploading ${documentType} document for NGO: ${ngoName}`);
+      
+      // Use the backend API for upload
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/upload/image`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (response.data.success && response.data.url) {
+        console.log('Upload successful:', response.data.url);
+        onFileUpload(response.data.url);
+        toast.success('Document uploaded successfully');
+      } else {
+        throw new Error(response.data.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      
+      let errorMessage = 'Failed to upload file. Please try again.';
+      
+      if (axios.isAxiosError(error) && error.response) {
+        console.error('API error details:', error.response.data);
+        errorMessage = error.response?.data?.message || errorMessage;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      setUploadError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setUploading(false);
+    }
+  }, [onFileUpload, documentType]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/jpeg': [],
+      'image/png': [],
+      'image/jpg': [],
+      'application/pdf': [],
+    },
+    maxSize: 5 * 1024 * 1024, // 5MB
+    multiple: false,
+  });
+
+  return (
+    <div
+      {...getRootProps()}
+      className={`w-full flex justify-center items-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md cursor-pointer 
+        ${isDragActive ? 'border-theme-nature bg-theme-nature/5' : 'border-secondary-300 dark:border-border-dark'}`}
+    >
+      <input {...getInputProps()} />
+      <div className="space-y-1 text-center">
+        <svg
+          className="mx-auto h-12 w-12 text-gray-400"
+          stroke="currentColor"
+          fill="none"
+          viewBox="0 0 48 48"
+          aria-hidden="true"
+        >
+          <path
+            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <div className="flex text-sm text-gray-600 justify-center">
+          <span className="relative cursor-pointer bg-white rounded-md font-medium text-theme-nature hover:text-theme-nature/90">
+            {uploading ? (
+              <div className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-theme-nature" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Uploading...
+              </div>
+            ) : (
+              isDragActive ? 'Drop the file here' : `Upload ${label}`
+            )}
+          </span>
+        </div>
+        <p className="text-xs text-gray-500">PNG, JPG, JPEG, PDF up to 5MB</p>
+        {uploadError && <p className="text-xs text-theme-heart mt-2">{uploadError}</p>}
+      </div>
+    </div>
+  );
 };
 
 const RegistrationForm = () => {
@@ -124,6 +255,15 @@ const RegistrationForm = () => {
         break;
       case 3: // Documents & Focus Areas
         fieldsToValidate = ['focusAreas', 'registrationCertificateUrl'];
+        // Required validation for registration certificate
+        if (!watch('registrationCertificateUrl')) {
+          setValue('registrationCertificateUrl', '');
+          errors.registrationCertificateUrl = {
+            type: 'required',
+            message: 'Registration certificate is required'
+          };
+          return false;
+        }
         break;
     }
     
@@ -222,12 +362,11 @@ const RegistrationForm = () => {
     }
   };
 
-  const handleCloudinaryUpload = (result: CloudinaryResult, fieldName: 'registrationCertificateUrl' | 'taxExemptionCertificateUrl') => {
-    if (result.info && result.info.secure_url) {
-      setValue(fieldName, result.info.secure_url);
-      // Trigger validation after setting the value
-      trigger(fieldName);
-    }
+  // Define handleFileUpload function
+  const handleFileUpload = (url: string, fieldName: 'registrationCertificateUrl' | 'taxExemptionCertificateUrl') => {
+    setValue(fieldName, url);
+    // Trigger validation after setting the value
+    trigger(fieldName);
   };
 
   const renderProgressBar = () => {
@@ -263,6 +402,7 @@ const RegistrationForm = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">NGO Name <span className="text-theme-heart">*</span></label>
                 <input
                   type="text"
+                  id="name"
                   {...register('name', { required: 'NGO name is required' })}
                   className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
                 />
@@ -546,45 +686,12 @@ const RegistrationForm = () => {
                     </div>
                   </div>
                 ) : (
-                  <CldUploadWidget
-                    uploadPreset="ml_default"
-                    options={{
-                      maxFiles: 1,
-                      resourceType: "image",
-                    }}
-                    onSuccess={(result) => handleCloudinaryUpload(result as CloudinaryResult, 'registrationCertificateUrl')}
-                  >
-                    {({ open }) => (
-                      <button
-                        type="button"
-                        onClick={() => open()}
-                        className="w-full flex justify-center items-center px-6 pt-5 pb-6 border-2 border-dashed border-secondary-300 dark:border-border-dark rounded-md"
-                      >
-                        <div className="space-y-1 text-center">
-                          <svg
-                            className="mx-auto h-12 w-12 text-gray-400"
-                            stroke="currentColor"
-                            fill="none"
-                            viewBox="0 0 48 48"
-                            aria-hidden="true"
-                          >
-                            <path
-                              d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                              strokeWidth={2}
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                          <div className="flex text-sm text-gray-600 justify-center">
-                            <span className="relative cursor-pointer bg-white rounded-md font-medium text-theme-nature hover:text-theme-nature/90">
-                              Upload Registration Certificate
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-500">PNG, JPG, JPEG up to 10MB</p>
-                        </div>
-                      </button>
-                    )}
-                  </CldUploadWidget>
+                  <FileUploader
+                    onFileUpload={(url) => handleFileUpload(url, 'registrationCertificateUrl')}
+                    label="Registration Certificate"
+                    documentType="registration"
+                    required
+                  />
                 )}
                 {errors.registrationCertificateUrl && (
                   <p className="mt-1 text-sm text-theme-heart">{errors.registrationCertificateUrl.message}</p>
@@ -617,45 +724,11 @@ const RegistrationForm = () => {
                     </div>
                   </div>
                 ) : (
-                  <CldUploadWidget
-                    uploadPreset="ml_default"
-                    options={{
-                      maxFiles: 1,
-                      resourceType: "image",
-                    }}
-                    onSuccess={(result) => handleCloudinaryUpload(result as CloudinaryResult, 'taxExemptionCertificateUrl')}
-                  >
-                    {({ open }) => (
-                      <button
-                        type="button"
-                        onClick={() => open()}
-                        className="w-full flex justify-center items-center px-6 pt-5 pb-6 border-2 border-dashed border-secondary-300 dark:border-border-dark rounded-md"
-                      >
-                        <div className="space-y-1 text-center">
-                          <svg
-                            className="mx-auto h-12 w-12 text-gray-400"
-                            stroke="currentColor"
-                            fill="none"
-                            viewBox="0 0 48 48"
-                            aria-hidden="true"
-                          >
-                            <path
-                              d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                              strokeWidth={2}
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                          <div className="flex text-sm text-gray-600 justify-center">
-                            <span className="relative cursor-pointer bg-white rounded-md font-medium text-theme-nature hover:text-theme-nature/90">
-                              Upload Tax Exemption Certificate
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-500">PNG, JPG, JPEG up to 10MB</p>
-                        </div>
-                      </button>
-                    )}
-                  </CldUploadWidget>
+                  <FileUploader
+                    onFileUpload={(url) => handleFileUpload(url, 'taxExemptionCertificateUrl')}
+                    label="Tax Exemption Certificate"
+                    documentType="tax"
+                  />
                 )}
                 {errors.taxExemptionCertificateUrl && (
                   <p className="mt-1 text-sm text-theme-heart">{errors.taxExemptionCertificateUrl.message}</p>
