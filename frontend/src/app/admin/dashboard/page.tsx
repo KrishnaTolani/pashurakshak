@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { FiEye, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { FiEye, FiCheckCircle, FiXCircle, FiFileText } from 'react-icons/fi';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import DocumentViewer from '@/components/admin/DocumentViewer';
 
 interface NGORegistration {
   _id: string;
@@ -52,6 +53,7 @@ export default function AdminDashboard() {
   const [selectedNGO, setSelectedNGO] = useState<NGODetailData | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState<{ url: string; title: string } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -132,6 +134,20 @@ export default function AdminDashboard() {
     router.push('/admin/login');
   };
 
+  const handleViewDocument = (url: string, title: string) => {
+    // Make sure URL isn't empty
+    if (!url) {
+      toast.error('Document URL is missing or invalid');
+      return;
+    }
+    
+    // Log the URL for debugging
+    console.log(`Opening document: ${url}`);
+    
+    // Set the document to view
+    setViewingDocument({ url, title });
+  };
+
   if (isLoading && !showDetailModal) {
     return (
       <ProtectedRoute type="admin">
@@ -145,6 +161,15 @@ export default function AdminDashboard() {
   return (
     <ProtectedRoute type="admin">
       <div className="min-h-screen bg-gray-50 dark:bg-background-dark">
+        {/* Document Viewer Modal */}
+        {viewingDocument && (
+          <DocumentViewer
+            url={viewingDocument.url}
+            title={viewingDocument.title}
+            onClose={() => setViewingDocument(null)}
+          />
+        )}
+
         {/* NGO Detail Modal */}
         {showDetailModal && selectedNGO && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
@@ -265,17 +290,29 @@ export default function AdminDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Registration Certificate</p>
-                      {selectedNGO.documents.registrationCertificate && (
+                      {selectedNGO.documents.registrationCertificate ? (
                         <div className="mt-2">
-                          <a 
-                            href={selectedNGO.documents.registrationCertificate} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                          >
-                            View Certificate
-                          </a>
+                          <div className="mb-3 p-2 border rounded-md bg-gray-50 dark:bg-gray-800">
+                            <div 
+                              className="h-32 w-full rounded-md cursor-pointer mb-2 flex items-center justify-center bg-gray-100 dark:bg-gray-700 overflow-hidden"
+                              onClick={() => handleViewDocument(selectedNGO.documents.registrationCertificate, 'Registration Certificate')}
+                            >
+                              <div 
+                                className="h-full w-full bg-contain bg-center bg-no-repeat"
+                                style={{ backgroundImage: `url(${selectedNGO.documents.registrationCertificate})` }}
+                              />
+                            </div>
+                            <button
+                              onClick={() => handleViewDocument(selectedNGO.documents.registrationCertificate, 'Registration Certificate')}
+                              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all w-full justify-center"
+                            >
+                              <FiFileText className="w-4 h-4 mr-2" />
+                              View Certificate
+                            </button>
+                          </div>
                         </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Not provided</p>
                       )}
                     </div>
                     
@@ -283,14 +320,24 @@ export default function AdminDashboard() {
                       <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Tax Exemption Certificate</p>
                       {selectedNGO.documents.taxExemptionCertificate ? (
                         <div className="mt-2">
-                          <a 
-                            href={selectedNGO.documents.taxExemptionCertificate} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                          >
-                            View Certificate
-                          </a>
+                          <div className="mb-3 p-2 border rounded-md bg-gray-50 dark:bg-gray-800">
+                            <div 
+                              className="h-32 w-full rounded-md cursor-pointer mb-2 flex items-center justify-center bg-gray-100 dark:bg-gray-700 overflow-hidden"
+                              onClick={() => handleViewDocument(selectedNGO.documents.taxExemptionCertificate || '', 'Tax Exemption Certificate')}
+                            >
+                              <div 
+                                className="h-full w-full bg-contain bg-center bg-no-repeat"
+                                style={{ backgroundImage: `url(${selectedNGO.documents.taxExemptionCertificate})` }}
+                              />
+                            </div>
+                            <button
+                              onClick={() => handleViewDocument(selectedNGO.documents.taxExemptionCertificate || '', 'Tax Exemption Certificate')}
+                              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all w-full justify-center"
+                            >
+                              <FiFileText className="w-4 h-4 mr-2" />
+                              View Certificate
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <p className="text-sm text-gray-500 dark:text-gray-400">Not provided</p>
@@ -337,14 +384,6 @@ export default function AdminDashboard() {
             <div className="flex justify-between h-16">
               <div className="flex items-center">
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-              </div>
-              <div className="flex items-center">
-                <button
-                  onClick={handleLogout}
-                  className="ml-4 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                >
-                  Logout
-                </button>
               </div>
             </div>
           </div>
