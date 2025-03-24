@@ -9,8 +9,18 @@ const path = require('path');
  */
 exports.uploadImage = async (req, res) => {
   try {
+    console.log('Starting image upload process');
+    
+    // Log environment info
+    console.log('Environment:', {
+      nodeEnv: process.env.NODE_ENV,
+      platform: process.platform,
+      tmpDir: '/tmp'
+    });
+
     // Check if file exists in request
     if (!req.files || !req.files.image) {
+      console.log('No image file provided in request');
       return res.status(400).json({
         success: false,
         message: 'No image file provided'
@@ -21,6 +31,7 @@ exports.uploadImage = async (req, res) => {
     const { category, filename } = req.body;
     
     if (!category) {
+      console.log('Missing category parameter');
       return res.status(400).json({
         success: false,
         message: 'Image category is required (certificates or rescue)'
@@ -29,6 +40,7 @@ exports.uploadImage = async (req, res) => {
 
     // Validate category
     if (!['certificates', 'rescue'].includes(category)) {
+      console.log('Invalid category:', category);
       return res.status(400).json({
         success: false,
         message: 'Invalid category. Must be either "certificates" or "rescue"'
@@ -41,7 +53,7 @@ exports.uploadImage = async (req, res) => {
       name: imageFile.name,
       mimetype: imageFile.mimetype,
       size: imageFile.size,
-      tempFilePath: imageFile.tempFilePath
+      tempFilePath: imageFile.tempFilePath || 'No tempFilePath'
     });
 
     // Set folder path based on category
@@ -64,12 +76,47 @@ exports.uploadImage = async (req, res) => {
       options: uploadOptions
     });
 
-    // Upload file to Cloudinary
-    const result = await cloudinary.uploader.upload(imageFile.tempFilePath, uploadOptions);
+    // Upload to Cloudinary - using either tempFilePath or buffer
+    let result;
     
-    // Remove temporary file after upload
-    fs.unlinkSync(imageFile.tempFilePath);
-
+    if (imageFile.tempFilePath && fs.existsSync(imageFile.tempFilePath)) {
+      // Use temporary file if available
+      console.log('Uploading via tempFilePath');
+      result = await cloudinary.uploader.upload(imageFile.tempFilePath, uploadOptions);
+      
+      // Clean up temporary file
+      try {
+        fs.unlinkSync(imageFile.tempFilePath);
+      } catch (err) {
+        console.error('Error deleting temporary file:', err);
+      }
+    } else {
+      // Use buffer data if no temporary file
+      console.log('Uploading via buffer data');
+      
+      // Convert data to buffer if needed
+      const fileBuffer = imageFile.data instanceof Buffer 
+        ? imageFile.data 
+        : Buffer.from(imageFile.data);
+      
+      // Create a stream from the buffer
+      const stream = require('stream');
+      const bufferStream = new stream.PassThrough();
+      bufferStream.end(fileBuffer);
+      
+      // Upload stream
+      result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          uploadOptions,
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        bufferStream.pipe(uploadStream);
+      });
+    }
+    
     // Log successful upload
     console.log('Successfully uploaded to Cloudinary:', {
       url: result.secure_url,
