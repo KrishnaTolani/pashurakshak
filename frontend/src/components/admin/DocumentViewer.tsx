@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FiZoomIn, FiZoomOut, FiDownload, FiX, FiAlertCircle, FiRefreshCw } from 'react-icons/fi';
+import Image from 'next/image';
 
 interface DocumentViewerProps {
   url: string;
@@ -319,7 +320,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ url, title, onClose }) 
               {/* Background transparency pattern for transparent images */}
               <div className="absolute inset-0 bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAEKADAAQAAAABAAAAEAAAAAAXnVPIAAAAFElEQVQ4EWP8z8AARBQM6oFRAwACvgABJ5wDCQAAAABJRU5ErkJggg==')] opacity-10" />
               
-              <img 
+              <Image 
                 src={imageUrl} 
                 alt={title} 
                 className="max-w-full max-h-[calc(90vh-120px)] object-contain shadow-lg rounded-md"
@@ -328,6 +329,9 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ url, title, onClose }) 
                 onError={handleImageError}
                 crossOrigin="anonymous"
                 referrerPolicy="no-referrer"
+                width={800}
+                height={600}
+                unoptimized
               />
             </div>
           )}

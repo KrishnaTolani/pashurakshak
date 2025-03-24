@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useRouter } from 'next/navigation';
 
 interface LoginFormData {
@@ -27,8 +27,9 @@ export default function AdminLogin() {
       
       // Redirect to dashboard
       router.push('/admin/dashboard');
-    } catch (error: any) {
-      setError(error.response?.data?.message || 'Login failed. Please try again.');
+    } catch (error) {
+      const axiosError = error as AxiosError<{message?: string}>;
+      setError(axiosError.response?.data?.message || 'Login failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -66,7 +67,6 @@ export default function AdminLogin() {
               </label>
               <input
                 id="email-address"
-                name="email"
                 type="email"
                 autoComplete="email"
                 required
@@ -90,7 +90,6 @@ export default function AdminLogin() {
               </label>
               <input
                 id="password"
-                name="password"
                 type="password"
                 autoComplete="current-password"
                 required

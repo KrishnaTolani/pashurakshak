@@ -88,7 +88,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) {
       setUploadError('No file selected');
-      toast.error('Please select a file to upload');
+      toast.error(`Please select a ${required ? 'required ' : ''}file to upload`);
       return;
     }
 
@@ -167,7 +167,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     } finally {
       setUploading(false);
     }
-  }, [onFileUpload, documentType]);
+  }, [onFileUpload, documentType, required]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

@@ -129,11 +129,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    router.push('/admin/login');
-  };
-
   const handleViewDocument = (url: string, title: string) => {
     // Make sure URL isn't empty
     if (!url) {
