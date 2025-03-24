@@ -20,9 +20,14 @@ export function middleware(request: NextRequest) {
   ];
 
   // Check if the current path is a public route
-  const isPublicRoute = publicRoutes.some(route => 
-    path === route || path.startsWith(`${route}/`)
-  );
+  const isPublicRoute = publicRoutes.some(route => {
+    // For register, only the exact route is public, not its sub-routes
+    if (route === '/register') {
+      return path === route;
+    }
+    // For other public routes, allow their sub-routes as well
+    return path === route || path.startsWith(`${route}/`);
+  });
 
   // Define route types
   const isAdminRoute = path.startsWith('/admin');

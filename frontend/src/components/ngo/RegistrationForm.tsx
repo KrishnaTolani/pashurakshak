@@ -104,13 +104,21 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       const ngoName = nameInput?.value || 'ngo';
       const formattedNgoName = ngoName.toLowerCase().replace(/[^a-z0-9]/g, '_');
       
-      // Create form data for upload
+      // Create form data for upload - match exactly what backend expects
       const formData = new FormData();
-      formData.append('file', file);
-      formData.append('fileName', `${prefix}_${formattedNgoName}_${Date.now()}`);
-      formData.append('folder', 'ngo_documents');
+      
+      // Backend expects the file with field name "image" (not "file")
+      formData.append('image', file);
+      
+      // Required category parameter - must be "certificates" or "rescue"
+      formData.append('category', 'certificates');
+      
+      // Optional filename parameter
+      formData.append('filename', `${prefix}_${formattedNgoName}_${Date.now()}`);
       
       console.log(`Uploading ${documentType} document for NGO: ${ngoName}`);
+      console.log('File size:', (file.size / 1024).toFixed(2), 'KB');
+      console.log('File type:', file.type);
       
       // Use the backend API for upload
       const response = await axios.post(
@@ -120,12 +128,17 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           headers: {
             'Content-Type': 'multipart/form-data',
           },
+          // Add timeout to avoid long-hanging requests
+          timeout: 30000, // 30 seconds timeout
         }
       );
 
-      if (response.data.success && response.data.url) {
-        console.log('Upload successful:', response.data.url);
-        onFileUpload(response.data.url);
+      console.log('Upload response:', response.data);
+
+      if (response.data.success && response.data.data && response.data.data.url) {
+        // Handle response structure where URL is in data.url
+        console.log('Upload successful:', response.data.data.url);
+        onFileUpload(response.data.data.url);
         toast.success('Document uploaded successfully');
       } else {
         throw new Error(response.data.message || 'Upload failed');
@@ -138,6 +151,13 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       if (axios.isAxiosError(error) && error.response) {
         console.error('API error details:', error.response.data);
         errorMessage = error.response?.data?.message || errorMessage;
+        
+        // Additional specific error handling
+        if (errorMessage.includes('No image file')) {
+          errorMessage = 'No image file was detected. Please select a valid image file.';
+        } else if (error.code === 'ECONNABORTED') {
+          errorMessage = 'Upload timed out. Please try a smaller file or check your connection.';
+        }
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
@@ -155,7 +175,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       'image/jpeg': [],
       'image/png': [],
       'image/jpg': [],
-      'application/pdf': [],
+      'image/gif': [],
+      'image/webp': [],
     },
     maxSize: 5 * 1024 * 1024, // 5MB
     multiple: false,
@@ -198,7 +219,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
             )}
           </span>
         </div>
-        <p className="text-xs text-gray-500">PNG, JPG, JPEG, PDF up to 5MB</p>
+        <p className="text-xs text-gray-500">PNG, JPG, JPEG, GIF up to 5MB</p>
         {uploadError && <p className="text-xs text-theme-heart mt-2">{uploadError}</p>}
       </div>
     </div>
@@ -333,12 +354,16 @@ const RegistrationForm = () => {
       });
 
       if (response.data.success) {
-        toast.success('Registration submitted successfully! Please wait for admin approval.');
-        // Store the NGO ID for status checking
-        localStorage.setItem('ngoRegistrationId', response.data.data.id);
+        // Display success message with instructions to check email
+        toast.success(
+          'Registration submitted successfully! Please wait for admin approval. You will receive an email when your registration is approved.',
+          { duration: 6000 }
+        );
         
-        // Display status page or redirect to status check
-        router.push(`/register/status?id=${response.data.data.id}`);
+        // Redirect to login page directly instead of status page
+        setTimeout(() => {
+          router.push('/login');
+        }, 3000);
       } else {
         throw new Error(response.data.message || 'Registration failed');
       }

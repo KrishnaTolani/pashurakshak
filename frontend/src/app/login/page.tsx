@@ -65,12 +65,27 @@ export default function LoginPage() {
         if (ngoData.status === 'approved') {
           console.log('NGO approved, redirecting to dashboard');
           router.push('/dashboard');
-        } else if (ngoData.id) {
-          console.log('NGO not approved, redirecting to status page');
-          router.push(`/register/status?id=${ngoData.id}`);
         } else {
-          console.log('NGO ID missing, redirecting to general status page');
-          router.push('/register/status');
+          // Display appropriate message for non-approved NGOs
+          if (ngoData.status === 'pending') {
+            toast.error('Your NGO registration is pending approval. Please wait for an email confirmation.', { 
+              duration: 6000,
+              icon: '⏳'
+            });
+          } else if (ngoData.status === 'rejected') {
+            toast.error('Your NGO registration has been rejected. Please contact support for more information.', { 
+              duration: 6000,
+              icon: '❌'
+            });
+          } else {
+            toast.error('Your NGO account is not active. Please contact support.', { 
+              duration: 6000
+            });
+          }
+          
+          // Clear auth tokens to prevent login on non-approved accounts
+          localStorage.removeItem('ngoToken');
+          localStorage.removeItem('ngoUser');
         }
       } else {
         toast.error(response.data.message || 'Login failed');
