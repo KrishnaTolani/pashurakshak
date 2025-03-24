@@ -3,6 +3,7 @@ const setupRoutes = (app) => {
   app.use('/api/auth', require('../routes/authRoutes'));
   app.use('/api/admin', require('../routes/adminRoutes'));
   app.use('/api/ngo', require('../routes/ngoRoutes'));
+  app.use('/api/upload', require('../routes/uploadRoutes'));
   
   // 404 handler for undefined routes
   app.use((req, res) => {

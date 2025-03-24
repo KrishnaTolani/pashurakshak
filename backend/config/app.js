@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fileUpload = require('express-fileupload');
 
 const createApp = () => {
   const app = express();
@@ -19,6 +20,17 @@ const createApp = () => {
 
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  
+  // Add file upload middleware
+  app.use(fileUpload({
+    useTempFiles: true,
+    tempFileDir: path.join(__dirname, '../uploads/tmp'),
+    createParentPath: true,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    debug: true, // Enable debugging
+    abortOnLimit: true,
+    responseOnLimit: 'File size limit has been reached'
+  }));
 
   // Set up EJS as the view engine
   app.set('view engine', 'ejs');

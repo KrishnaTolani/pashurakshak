@@ -19,6 +19,7 @@ This document outlines all the completed API endpoints in the PashuRakshak appli
 | GET    | /api/admin/verify                 | Verify Admin Token                 | Yes (Admin)  | -                 |
 | GET    | /api/admin/registrations          | Get All NGO Registrations          | Yes (Admin)  | -                 |
 | PUT    | /api/admin/registrations/:id      | Update NGO Registration Status     | Yes (Admin)  | application/json  |
+| POST   | /api/upload/image                 | Upload Image to Cloudinary         | No           | multipart/form-data |
 
 ## Base URL
 ```
@@ -641,14 +642,31 @@ PashuRakshak uses Cloudinary for storing document images. Follow these steps to 
 
 ### 1. Upload Images to Cloudinary
 
-Before sending the registration request, upload your documents to Cloudinary using either:
+You can upload images to Cloudinary using one of these methods:
+
+#### Method 1: Use the PashuRakshak Upload API
+
+Send a POST request with the image file to our upload API:
+
+**Single Image Upload:**
+```
+POST /api/upload/image
+```
+With multipart/form-data containing:
+- `image`: The image file
+- `category`: Either "certificates" or "rescue"
+- `filename` (optional): Custom filename to use
+
+#### Method 2: Direct Cloudinary Integration
+
+Alternatively, you can upload directly to Cloudinary using:
 - Cloudinary's direct upload API
 - Cloudinary upload widget in your frontend
 - Your existing Cloudinary integration
 
 ### 2. Use the Returned URL in API Requests
 
-After a successful upload, Cloudinary returns a URL like this:
+After a successful upload, you'll receive a URL like this:
 ```
 https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/folder/filename.png
 ```
@@ -668,6 +686,38 @@ Use this URL in the NGO registration request:
 - Prefer PNG format for better clarity
 - Ensure documents are legible and clearly visible
 - Keep file sizes reasonable for faster loading
+
+## Image Upload APIs
+
+### Upload Single Image
+- **Endpoint**: `POST /api/upload/image`
+- **Description**: Upload single image to Cloudinary with proper folder structure
+- **Content-Type**: `multipart/form-data`
+- **Request Body**:
+  ```
+  image: [Image File]
+  category: "certificates" or "rescue"
+  filename: "custom_name" (optional)
+  ```
+- **Success Response**: Status 200
+  ```json
+  {
+    "success": true,
+    "message": "Image uploaded successfully",
+    "data": {
+      "url": "https://res.cloudinary.com/dlwtrimk6/image/upload/v1234567890/pashurakshak/certificates/my_certificate.jpg",
+      "public_id": "pashurakshak/certificates/my_certificate"
+    }
+  }
+  ```
+- **Error Response**: Status 400/500
+  ```json
+  {
+    "success": false,
+    "message": "Error message",
+    "error": "Detailed error information"
+  }
+  ```
 
 ## Advanced Features
 
