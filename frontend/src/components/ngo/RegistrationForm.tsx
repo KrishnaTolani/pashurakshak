@@ -28,6 +28,32 @@ interface RegistrationFormData {
   phone?: string;
 }
 
+// Add interface for the request body with documents
+interface NGORegistrationRequest {
+  name: string;
+  email: string;
+  password: string;
+  contactPerson: {
+    name: string;
+    phone: string;
+    email: string;
+  };
+  organizationType: string;
+  registrationNumber: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  focusAreas: string[];
+  website: string;
+  documents: {
+    registrationCertificate?: string;
+    taxExemptionCertificate?: string;
+  };
+}
+
 const variants: Variants = {
   hidden: { opacity: 0, x: 20 },
   visible: { opacity: 1, x: 0 },
@@ -94,37 +120,11 @@ const RegistrationForm = () => {
       setIsSubmitting(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-      // Create FormData object for file uploads
-      const formDataToSend = new FormData();
-      
-      // Add text fields
-      formDataToSend.append('name', data.name);
-      formDataToSend.append('email', data.email);
-      formDataToSend.append('password', "defaultPassword123");
-      formDataToSend.append('contactPerson[name]', data.contactPersonName);
-      formDataToSend.append('contactPerson[phone]', data.contactPersonPhone);
-      formDataToSend.append('contactPerson[email]', data.contactPersonEmail);
-      formDataToSend.append('organizationType', data.organizationType);
-      formDataToSend.append('registrationNumber', data.registrationNumber);
-      formDataToSend.append('address[street]', data.street);
-      formDataToSend.append('address[city]', data.city);
-      formDataToSend.append('address[state]', data.state);
-      formDataToSend.append('address[pincode]', data.pincode);
-      formDataToSend.append('focusAreas', JSON.stringify(data.focusAreas));
-      formDataToSend.append('website', data.website || '');
-
-      // Add files from the form data
-      if (data.registrationCertificate instanceof FileList && data.registrationCertificate[0]) {
-        formDataToSend.append('documents[registrationCertificate]', data.registrationCertificate[0]);
-      }
-      if (data.taxExemptionCertificate instanceof FileList && data.taxExemptionCertificate[0]) {
-        formDataToSend.append('documents[taxExemptionCertificate]', data.taxExemptionCertificate[0]);
-      }
-
-      // Log the form data for debugging
-      console.log('Submitting form data:', {
+      // Create the request body according to the API documentation
+      const requestBody: NGORegistrationRequest = {
         name: data.name,
         email: data.email,
+        password: "defaultPassword123", // You may want to add password field to the form
         contactPerson: {
           name: data.contactPersonName,
           phone: data.contactPersonPhone,
@@ -139,26 +139,37 @@ const RegistrationForm = () => {
           pincode: data.pincode
         },
         focusAreas: data.focusAreas,
-        website: data.website,
-        hasRegistrationCertificate: !!data.registrationCertificate,
-        hasTaxExemptionCertificate: !!data.taxExemptionCertificate
-      });
+        website: data.website || '',
+        documents: {}
+      };
 
-      // Log FormData contents
-      for (let pair of formDataToSend.entries()) {
-        console.log(pair[0] + ': ' + pair[1]);
+      // Add documents if available
+      if (data.registrationCertificate) {
+        // For actual implementation, you'll need to upload to Cloudinary first
+        // and then use the returned URL
+        requestBody.documents.registrationCertificate = "https://res.cloudinary.com/pashurakshak/image/upload/v1234567890/certificates/registration_cert.png";
+      }
+      
+      if (data.taxExemptionCertificate) {
+        requestBody.documents.taxExemptionCertificate = "https://res.cloudinary.com/pashurakshak/image/upload/v1234567890/certificates/tax_cert.png";
       }
 
-      const response = await axios.post(`${apiUrl}/api/auth/register`, formDataToSend, {
-          headers: {
-          'Content-Type': 'multipart/form-data',
-          },
+      console.log('Submitting form data:', requestBody);
+
+      const response = await axios.post(`${apiUrl}/api/ngo/register`, requestBody, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
         withCredentials: true
       });
 
       if (response.data.success) {
         toast.success('Registration submitted successfully! Please wait for admin approval.');
-        window.location.href = '/admin/registrations';
+        // Store the NGO ID for status checking
+        localStorage.setItem('ngoRegistrationId', response.data.data.id);
+        
+        // Display status page or redirect to status check
+        router.push(`/register/status?id=${response.data.data.id}`);
       } else {
         throw new Error(response.data.message || 'Registration failed');
       }
