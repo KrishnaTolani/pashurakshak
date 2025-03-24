@@ -19,6 +19,7 @@ This document outlines all the completed API endpoints in the PashuRakshak appli
 | GET    | /api/admin/verify                 | Verify Admin Token                 | Yes (Admin)  | -                 |
 | GET    | /api/admin/registrations          | Get All NGO Registrations          | Yes (Admin)  | -                 |
 | PUT    | /api/admin/registrations/:id      | Update NGO Registration Status     | Yes (Admin)  | application/json  |
+| GET    | /api/admin/ngo/:id                | Get Complete NGO Profile           | Yes (Admin)  | -                 |
 | POST   | /api/upload/image                 | Upload Image to Cloudinary         | No           | multipart/form-data |
 
 ## Base URL
@@ -337,6 +338,53 @@ http://localhost:5000
   {
     "success": false,
     "message": "Not authorized to access this route"
+  }
+  ```
+
+### Get Complete NGO Profile
+- **Endpoint**: `GET /api/admin/ngo/:id`
+- **Description**: Get the complete profile of an NGO by ID (Admin only)
+- **Headers**: 
+  ```
+  Authorization: Bearer <admin_token>
+  ```
+- **Success Response**: Status 200
+  ```json
+  {
+    "success": true,
+    "data": {
+      "_id": "12345",
+      "name": "Animal Welfare NGO",
+      "email": "ngo@example.com",
+      "status": "approved",
+      "contactPerson": {
+        "name": "John Doe",
+        "phone": "9876543210",
+        "email": "john@example.com"
+      },
+      "organizationType": "Animal Welfare",
+      "registrationNumber": "AWN12345",
+      "address": {
+        "street": "123 Main St",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "pincode": "400001"
+      },
+      "focusAreas": ["Animal Rescue", "Pet Adoption"],
+      "website": "https://example.com",
+      "documents": {
+        "registrationCertificate": "url_to_certificate",
+        "taxExemptionCertificate": "url_to_certificate"
+      },
+      "createdAt": "2023-01-01T00:00:00.000Z"
+    }
+  }
+  ```
+- **Error Response**: Status 404
+  ```json
+  {
+    "success": false,
+    "message": "NGO not found"
   }
   ```
 
@@ -795,6 +843,12 @@ curl -X POST http://localhost:5000/api/ngo/login \
     "email": "ngo@example.com",
     "password": "password123"
   }'
+```
+
+### Get NGO Profile (Admin)
+```bash
+curl -X GET http://localhost:5000/api/admin/ngo/NGO_ID_HERE \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN_HERE"
 ```
 
 ### Get NGO Profile

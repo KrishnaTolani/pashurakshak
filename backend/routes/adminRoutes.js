@@ -5,6 +5,7 @@ const auth = require('../middleware/auth');
 const Ngo = require('../models/Ngo');
 const emailService = require('../utils/emailService');
 const bcrypt = require('bcryptjs');
+const adminController = require('../controllers/adminController');
 
 // Admin login
 router.post('/login', async (req, res) => {
@@ -62,6 +63,9 @@ router.get('/verify', (req, res) => {
     }
   });
 });
+
+// Get NGO profile by ID (Admin only)
+router.get('/ngo/:id', adminController.getNgoById);
 
 // Get all NGO registrations
 router.get('/registrations', async (req, res) => {
