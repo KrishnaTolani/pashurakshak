@@ -3,19 +3,24 @@
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { HeroUIProvider } from '@heroui/react';
 import { useEffect } from 'react';
-import { setNgoAuthToken } from '@/utils/auth';
+import { setNgoAuthToken, setAuthToken } from '@/utils/auth';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Initialize authentication state
   useEffect(() => {
-    // Check if we have a ngoToken in localStorage but not in cookie
-    // This ensures middleware can access the token
+    // Sync tokens from localStorage to cookies for middleware access
     const syncTokens = () => {
       if (typeof window !== 'undefined') {
+        // Sync NGO token
         const ngoToken = localStorage.getItem('ngoToken');
         if (ngoToken) {
-          // Set the token to cookie for middleware access
           setNgoAuthToken(ngoToken);
+        }
+        
+        // Sync admin token
+        const adminToken = localStorage.getItem('adminToken');
+        if (adminToken) {
+          setAuthToken(adminToken);
         }
       }
     };

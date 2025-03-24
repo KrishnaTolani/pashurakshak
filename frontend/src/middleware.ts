@@ -11,41 +11,49 @@ export function middleware(request: NextRequest) {
   // Get the NGO token from cookies (we'll set this during login)
   const ngoToken = request.cookies.get('ngoToken')?.value;
 
+  // Define public routes that don't need authentication
+  const publicRoutes = [
+    '/',
+    '/login',
+    '/register',
+    '/admin/login'
+  ];
+
+  // Check if the current path is a public route
+  const isPublicRoute = publicRoutes.some(route => 
+    path === route || path.startsWith(`${route}/`)
+  );
+
   // Define route types
   const isAdminRoute = path.startsWith('/admin');
-  const isNgoRoute = !isAdminRoute && 
-    path !== '/' && 
-    !path.startsWith('/login') && 
-    !path.startsWith('/register') && 
-    !path.startsWith('/register/status');
-    
-  // Define login/register pages
   const isAdminLoginPage = path === '/admin/login';
   const isNgoLoginPage = path === '/login';
-  const isRegisterPage = path === '/register' || path.startsWith('/register/status');
+
+  // If it's a public route, allow access
+  if (isPublicRoute) {
+    // But if we have tokens and trying to access login pages, redirect to dashboard
+    if (isNgoLoginPage && ngoToken) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    
+    if (isAdminLoginPage && adminToken) {
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+    }
+    
+    return NextResponse.next();
+  }
 
   // Admin route protection
-  if (isAdminRoute && !isAdminLoginPage && !adminToken) {
-    const url = new URL('/admin/login', request.url);
-    return NextResponse.redirect(url);
+  if (isAdminRoute) {
+    if (!adminToken && !isAdminLoginPage) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+    return NextResponse.next();
   }
 
-  // If trying to access admin login page with valid token
-  if (isAdminLoginPage && adminToken) {
-    const url = new URL('/admin/dashboard', request.url);
-    return NextResponse.redirect(url);
-  }
-
-  // NGO route protection
-  if (isNgoRoute && !ngoToken) {
-    const url = new URL('/login', request.url);
-    return NextResponse.redirect(url);
-  }
-
-  // If trying to access NGO login page with valid token
-  if (isNgoLoginPage && ngoToken) {
-    const url = new URL('/dashboard', request.url);
-    return NextResponse.redirect(url);
+  // NGO route protection (all other non-public routes)
+  if (!ngoToken) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   return NextResponse.next();
@@ -53,7 +61,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all paths
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    // Match all paths except static files and API routes
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ]
 }; 

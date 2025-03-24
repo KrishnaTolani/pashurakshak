@@ -5,7 +5,7 @@ import { useTheme } from 'next-themes';
 import { RiSunLine, RiMoonClearLine } from 'react-icons/ri';
 import { FiLogOut } from 'react-icons/fi';
 import { usePathname } from 'next/navigation';
-import { logout, logoutNgo } from '@/utils/auth';
+import { smartLogout, getNgoAuthToken, getAuthToken } from '@/utils/auth';
 import { useEffect, useState } from 'react';
 
 export function Navbar() {
@@ -14,21 +14,33 @@ export function Navbar() {
   const [userType, setUserType] = useState<'admin' | 'ngo' | null>(null);
 
   useEffect(() => {
-    // Determine user type based on path or localStorage
-    if (pathname?.startsWith('/admin')) {
-      setUserType('admin');
-    } else if (localStorage.getItem('ngoToken')) {
-      setUserType('ngo');
-    }
+    // Determine user type based on path and available tokens
+    const determineUserType = () => {
+      if (typeof window === 'undefined') return;
+      
+      const hasAdminToken = !!getAuthToken();
+      const hasNgoToken = !!getNgoAuthToken();
+      
+      // If on admin routes, prioritize admin user type
+      if (pathname?.startsWith('/admin')) {
+        setUserType('admin');
+      } 
+      // Otherwise prioritize NGO user type if token exists
+      else if (hasNgoToken) {
+        setUserType('ngo');
+      }
+      // Fallback to admin if only admin token exists
+      else if (hasAdminToken) {
+        setUserType('admin');
+      }
+      // No tokens, no user type
+      else {
+        setUserType(null);
+      }
+    };
+    
+    determineUserType();
   }, [pathname]);
-
-  const handleLogout = () => {
-    if (userType === 'admin') {
-      logout(); // Admin logout
-    } else {
-      logoutNgo(); // NGO logout
-    }
-  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border dark:border-border-dark bg-card/95 backdrop-blur-lg dark:bg-gradient-to-r dark:from-card-dark dark:to-muted-dark/95">
@@ -75,7 +87,7 @@ export function Navbar() {
             
             {userType && (
               <button 
-                onClick={handleLogout}
+                onClick={smartLogout}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors duration-200 dark:bg-theme-heart/10 dark:text-theme-heart dark:hover:bg-theme-heart/20"
               >
                 <FiLogOut className="w-5 h-5" />
