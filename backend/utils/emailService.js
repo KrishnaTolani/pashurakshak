@@ -70,8 +70,8 @@ async function sendEmail(options) {
 // Send approval email with login credentials
 const sendApprovalEmail = async (email, password, ngoName) => {
   const loginUrl = process.env.FRONTEND_URL 
-    ? `${process.env.FRONTEND_URL}/ngo/login` 
-    : 'http://localhost:3000/ngo/login';
+    ? `${process.env.FRONTEND_URL}/login` 
+    : 'http://localhost:3000/login';
 
   const mailOptions = {
     from: '"Pashurakshak Admin" <sih.pravaah@gmail.com>',
