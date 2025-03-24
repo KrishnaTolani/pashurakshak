@@ -6,10 +6,13 @@ import axios from 'axios';
 import { motion, Variants } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { CldUploadWidget } from 'next-cloudinary';
 
 interface RegistrationFormData {
   name: string;
   email: string;
+  password: string;
+  confirmPassword: string;
   contactPersonName: string;
   contactPersonPhone: string;
   contactPersonEmail: string;
@@ -21,11 +24,8 @@ interface RegistrationFormData {
   pincode: string;
   focusAreas: string[];
   website: string;
-  registrationCertificate: File | null;
-  taxExemptionCertificate: File | null;
-  district?: string;
-  address?: string;
-  phone?: string;
+  registrationCertificateUrl: string;
+  taxExemptionCertificateUrl?: string;
 }
 
 // Add interface for the request body with documents
@@ -49,8 +49,14 @@ interface NGORegistrationRequest {
   focusAreas: string[];
   website: string;
   documents: {
-    registrationCertificate?: string;
+    registrationCertificate: string;
     taxExemptionCertificate?: string;
+  };
+}
+
+interface CloudinaryResult {
+  info: {
+    secure_url: string;
   };
 }
 
@@ -69,53 +75,80 @@ const progressVariants: Variants = {
 };
 
 const RegistrationForm = () => {
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<RegistrationFormData>();
+  const { register, handleSubmit, formState: { errors }, watch, setValue, trigger } = useForm<RegistrationFormData>({
+    mode: 'onChange',
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      contactPersonName: '',
+      contactPersonPhone: '',
+      contactPersonEmail: '',
+      organizationType: '',
+      registrationNumber: '',
+      street: '',
+      city: '',
+      state: '',
+      pincode: '',
+      focusAreas: [],
+      website: '',
+      registrationCertificateUrl: '',
+      taxExemptionCertificateUrl: ''
+    }
+  });
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 5;
+  const totalSteps = 3; // Reduced to 3 meaningful steps
   const [mounted, setMounted] = useState(false);
-  const [formData, setFormData] = useState<RegistrationFormData>({
-    name: '',
-    email: '',
-    contactPersonName: '',
-    contactPersonPhone: '',
-    contactPersonEmail: '',
-    organizationType: '',
-    registrationNumber: '',
-    street: '',
-    city: '',
-    state: '',
-    pincode: '',
-    focusAreas: [],
-    website: '',
-    registrationCertificate: null,
-    taxExemptionCertificate: null
-  });
   const router = useRouter();
+  
+  // Watch for password to compare with confirmPassword
+  const password = watch('password');
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // Validate the current step before proceeding
+  const validateCurrentStep = async () => {
+    let fieldsToValidate: (keyof RegistrationFormData)[] = [];
+    
+    switch (currentStep) {
+      case 1: // Basic Information
+        fieldsToValidate = ['name', 'email', 'password', 'confirmPassword', 'organizationType', 'registrationNumber'];
+        break;
+      case 2: // Contact & Address
+        fieldsToValidate = ['contactPersonName', 'contactPersonPhone', 'contactPersonEmail', 'street', 'city', 'state', 'pincode'];
+        break;
+      case 3: // Documents & Focus Areas
+        fieldsToValidate = ['focusAreas', 'registrationCertificateUrl'];
+        break;
+    }
+    
+    const result = await trigger(fieldsToValidate);
+    return result;
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: keyof RegistrationFormData) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-        setFormData(prev => ({
-          ...prev,
-        [fieldName]: file
-        }));
+  const nextStep = async () => {
+    const isValid = await validateCurrentStep();
+    if (isValid) {
+      setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+    } else {
+      toast.error("Please fill all required fields correctly before proceeding");
     }
   };
 
+  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+
   const onSubmit = async (data: RegistrationFormData) => {
+    const isValid = await validateCurrentStep();
+    if (!isValid) {
+      toast.error("Please fill all required fields correctly before submitting");
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -124,7 +157,7 @@ const RegistrationForm = () => {
       const requestBody: NGORegistrationRequest = {
         name: data.name,
         email: data.email,
-        password: "defaultPassword123", // You may want to add password field to the form
+        password: data.password,
         contactPerson: {
           name: data.contactPersonName,
           phone: data.contactPersonPhone,
@@ -140,18 +173,14 @@ const RegistrationForm = () => {
         },
         focusAreas: data.focusAreas,
         website: data.website || '',
-        documents: {}
+        documents: {
+          registrationCertificate: data.registrationCertificateUrl
+        }
       };
 
-      // Add documents if available
-      if (data.registrationCertificate) {
-        // For actual implementation, you'll need to upload to Cloudinary first
-        // and then use the returned URL
-        requestBody.documents.registrationCertificate = "https://res.cloudinary.com/pashurakshak/image/upload/v1234567890/certificates/registration_cert.png";
-      }
-      
-      if (data.taxExemptionCertificate) {
-        requestBody.documents.taxExemptionCertificate = "https://res.cloudinary.com/pashurakshak/image/upload/v1234567890/certificates/tax_cert.png";
+      // Add tax exemption certificate if available
+      if (data.taxExemptionCertificateUrl) {
+        requestBody.documents.taxExemptionCertificate = data.taxExemptionCertificateUrl;
       }
 
       console.log('Submitting form data:', requestBody);
@@ -193,8 +222,13 @@ const RegistrationForm = () => {
     }
   };
 
-  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps));
-  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+  const handleCloudinaryUpload = (result: CloudinaryResult, fieldName: 'registrationCertificateUrl' | 'taxExemptionCertificateUrl') => {
+    if (result.info && result.info.secure_url) {
+      setValue(fieldName, result.info.secure_url);
+      // Trigger validation after setting the value
+      trigger(fieldName);
+    }
+  };
 
   const renderProgressBar = () => {
     const progress = (currentStep / totalSteps) * 100;
@@ -226,7 +260,7 @@ const RegistrationForm = () => {
             <h3 className="text-xl font-semibold bg-gradient-to-r from-theme-nature via-primary-500 to-theme-heart bg-clip-text text-transparent dark:from-theme-paw dark:via-theme-sky dark:to-theme-heart">Organization Details</h3>
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">NGO Name</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">NGO Name <span className="text-theme-heart">*</span></label>
                 <input
                   type="text"
                   {...register('name', { required: 'NGO name is required' })}
@@ -236,7 +270,7 @@ const RegistrationForm = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email <span className="text-theme-heart">*</span></label>
                 <input
                   type="email"
                   {...register('email', {
@@ -250,45 +284,38 @@ const RegistrationForm = () => {
                 />
                 {errors.email && <p className="mt-1 text-sm text-theme-heart">{errors.email.message}</p>}
               </div>
-
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person Name</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password <span className="text-theme-heart">*</span></label>
                 <input
-                  type="text"
-                  {...register('contactPersonName', { required: 'Contact person name is required' })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
-                />
-                {errors.contactPersonName && <p className="mt-1 text-sm text-theme-heart">{errors.contactPersonName.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person Phone</label>
-                <input
-                  type="tel"
-                  {...register('contactPersonPhone', { required: 'Contact person phone is required' })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
-                />
-                {errors.contactPersonPhone && <p className="mt-1 text-sm text-theme-heart">{errors.contactPersonPhone.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person Email</label>
-                <input
-                  type="email"
-                  {...register('contactPersonEmail', {
-                    required: 'Contact person email is required',
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Invalid email address'
+                  type="password"
+                  {...register('password', {
+                    required: 'Password is required',
+                    minLength: {
+                      value: 8,
+                      message: 'Password must be at least 8 characters'
                     }
                   })}
                   className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
                 />
-                {errors.contactPersonEmail && <p className="mt-1 text-sm text-theme-heart">{errors.contactPersonEmail.message}</p>}
+                {errors.password && <p className="mt-1 text-sm text-theme-heart">{errors.password.message}</p>}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm Password <span className="text-theme-heart">*</span></label>
+                <input
+                  type="password"
+                  {...register('confirmPassword', {
+                    required: 'Please confirm your password',
+                    validate: value => value === password || 'Passwords do not match'
+                  })}
+                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
+                />
+                {errors.confirmPassword && <p className="mt-1 text-sm text-theme-heart">{errors.confirmPassword.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Organization Type</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Organization Type <span className="text-theme-heart">*</span></label>
                 <select
                   {...register('organizationType', { required: 'Organization type is required' })}
                   className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
@@ -303,7 +330,7 @@ const RegistrationForm = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Registration Number</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Registration Number <span className="text-theme-heart">*</span></label>
                 <input
                   type="text"
                   {...register('registrationNumber', { required: 'Registration number is required' })}
@@ -313,75 +340,14 @@ const RegistrationForm = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Street Address</label>
-                <input
-                  type="text"
-                  {...register('street', { required: 'Street address is required' })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
-                />
-                {errors.street && <p className="mt-1 text-sm text-theme-heart">{errors.street.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">City</label>
-                <input
-                  type="text"
-                  {...register('city', { required: 'City is required' })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
-                />
-                {errors.city && <p className="mt-1 text-sm text-theme-heart">{errors.city.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">State</label>
-                <input
-                  type="text"
-                  {...register('state', { required: 'State is required' })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
-                />
-                {errors.state && <p className="mt-1 text-sm text-theme-heart">{errors.state.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Pincode</label>
-                <input
-                  type="text"
-                  {...register('pincode', { required: 'Pincode is required' })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
-                />
-                {errors.pincode && <p className="mt-1 text-sm text-theme-heart">{errors.pincode.message}</p>}
-              </div>
-
-              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Website (Optional)</label>
                 <input
                   type="url"
                   {...register('website')}
                   className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
+                  placeholder="https://example.com"
                 />
                 {errors.website && <p className="mt-1 text-sm text-theme-heart">{errors.website.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Registration Certificate</label>
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  {...register('registrationCertificate', { required: 'Registration certificate is required' })}
-                  className="mt-1 block w-full"
-                />
-                {errors.registrationCertificate && <p className="mt-1 text-sm text-theme-heart">{errors.registrationCertificate.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tax Exemption Certificate (Optional)</label>
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  {...register('taxExemptionCertificate')}
-                  className="mt-1 block w-full"
-                />
-                {errors.taxExemptionCertificate && <p className="mt-1 text-sm text-theme-heart">{errors.taxExemptionCertificate.message}</p>}
               </div>
             </div>
           </motion.div>
@@ -396,56 +362,130 @@ const RegistrationForm = () => {
             exit="exit"
             className="space-y-6"
           >
-            <h3 className="text-xl font-semibold bg-gradient-to-r from-theme-nature via-primary-500 to-theme-heart bg-clip-text text-transparent dark:from-theme-paw dark:via-theme-sky dark:to-theme-heart">Location Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">State</label>
-                <select
-                  {...register('state', { required: 'State is required' })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
-                >
-                  <option value="">Select State</option>
-                  <option value="Maharashtra">Maharashtra</option>
-                  <option value="Delhi">Delhi</option>
-                  {/* Add more states */}
-                </select>
-                {errors.state && <p className="mt-1 text-sm text-theme-heart">{errors.state.message}</p>}
+            <h3 className="text-xl font-semibold bg-gradient-to-r from-theme-nature via-primary-500 to-theme-heart bg-clip-text text-transparent dark:from-theme-paw dark:via-theme-sky dark:to-theme-heart">Contact & Address Details</h3>
+            <div className="space-y-6">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-white">Contact Person Details</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person Name <span className="text-theme-heart">*</span></label>
+                  <input
+                    type="text"
+                    {...register('contactPersonName', { required: 'Contact person name is required' })}
+                    className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
+                  />
+                  {errors.contactPersonName && <p className="mt-1 text-sm text-theme-heart">{errors.contactPersonName.message}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person Phone <span className="text-theme-heart">*</span></label>
+                  <input
+                    type="tel"
+                    {...register('contactPersonPhone', { 
+                      required: 'Contact person phone is required',
+                      pattern: {
+                        value: /^[0-9]{10}$/,
+                        message: 'Please enter a valid 10-digit phone number'
+                      }
+                    })}
+                    className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
+                  />
+                  {errors.contactPersonPhone && <p className="mt-1 text-sm text-theme-heart">{errors.contactPersonPhone.message}</p>}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person Email <span className="text-theme-heart">*</span></label>
+                  <input
+                    type="email"
+                    {...register('contactPersonEmail', {
+                      required: 'Contact person email is required',
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: 'Invalid email address'
+                      }
+                    })}
+                    className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
+                  />
+                  {errors.contactPersonEmail && <p className="mt-1 text-sm text-theme-heart">{errors.contactPersonEmail.message}</p>}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">District</label>
-                <input
-                  type="text"
-                  {...register('district', { required: 'District is required' })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
-                  placeholder="Enter district"
-                />
-                {errors.district && <p className="mt-1 text-sm text-theme-heart">{errors.district.message}</p>}
-              </div>
+              <h4 className="text-lg font-medium text-gray-900 dark:text-white">Address Details</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Street Address <span className="text-theme-heart">*</span></label>
+                  <input
+                    type="text"
+                    {...register('street', { required: 'Street address is required' })}
+                    className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
+                  />
+                  {errors.street && <p className="mt-1 text-sm text-theme-heart">{errors.street.message}</p>}
+                </div>
 
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
-                <textarea
-                  {...register('address', { required: 'Address is required' })}
-                  rows={3}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
-                  placeholder="Enter complete address"
-                />
-                {errors.address && <p className="mt-1 text-sm text-theme-heart">{errors.address.message}</p>}
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">City <span className="text-theme-heart">*</span></label>
+                  <input
+                    type="text"
+                    {...register('city', { required: 'City is required' })}
+                    className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
+                  />
+                  {errors.city && <p className="mt-1 text-sm text-theme-heart">{errors.city.message}</p>}
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Pincode</label>
-                <input
-                  type="text"
-                  {...register('pincode', {
-                    required: 'Pincode is required',
-                    pattern: { value: /^\d{6}$/, message: 'Enter valid 6-digit pincode' }
-                  })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
-                  placeholder="Enter pincode"
-                />
-                {errors.pincode && <p className="mt-1 text-sm text-theme-heart">{errors.pincode.message}</p>}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">State <span className="text-theme-heart">*</span></label>
+                  <select
+                    {...register('state', { required: 'State is required' })}
+                    className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
+                  >
+                    <option value="">Select State</option>
+                    <option value="Andhra Pradesh">Andhra Pradesh</option>
+                    <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                    <option value="Assam">Assam</option>
+                    <option value="Bihar">Bihar</option>
+                    <option value="Chhattisgarh">Chhattisgarh</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Goa">Goa</option>
+                    <option value="Gujarat">Gujarat</option>
+                    <option value="Haryana">Haryana</option>
+                    <option value="Himachal Pradesh">Himachal Pradesh</option>
+                    <option value="Jharkhand">Jharkhand</option>
+                    <option value="Karnataka">Karnataka</option>
+                    <option value="Kerala">Kerala</option>
+                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Manipur">Manipur</option>
+                    <option value="Meghalaya">Meghalaya</option>
+                    <option value="Mizoram">Mizoram</option>
+                    <option value="Nagaland">Nagaland</option>
+                    <option value="Odisha">Odisha</option>
+                    <option value="Punjab">Punjab</option>
+                    <option value="Rajasthan">Rajasthan</option>
+                    <option value="Sikkim">Sikkim</option>
+                    <option value="Tamil Nadu">Tamil Nadu</option>
+                    <option value="Telangana">Telangana</option>
+                    <option value="Tripura">Tripura</option>
+                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                    <option value="Uttarakhand">Uttarakhand</option>
+                    <option value="West Bengal">West Bengal</option>
+                  </select>
+                  {errors.state && <p className="mt-1 text-sm text-theme-heart">{errors.state.message}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Pincode <span className="text-theme-heart">*</span></label>
+                  <input
+                    type="text"
+                    {...register('pincode', {
+                      required: 'Pincode is required',
+                      pattern: {
+                        value: /^\d{6}$/,
+                        message: 'Please enter a valid 6-digit pincode'
+                      }
+                    })}
+                    className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature dark:focus:border-theme-heart focus:ring-theme-nature dark:focus:ring-theme-heart sm:text-sm"
+                  />
+                  {errors.pincode && <p className="mt-1 text-sm text-theme-heart">{errors.pincode.message}</p>}
+                </div>
               </div>
             </div>
           </motion.div>
@@ -460,121 +500,13 @@ const RegistrationForm = () => {
             exit="exit"
             className="space-y-6"
           >
-            <h3 className="text-xl font-semibold bg-gradient-to-r from-theme-nature via-primary-500 to-theme-heart bg-clip-text text-transparent dark:from-theme-paw dark:via-theme-sky dark:to-theme-heart">Contact Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h3 className="text-xl font-semibold bg-gradient-to-r from-theme-nature via-primary-500 to-theme-heart bg-clip-text text-transparent dark:from-theme-paw dark:via-theme-sky dark:to-theme-heart">Focus Areas & Documents</h3>
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                <input
-                  type="email"
-                  {...register('email', {
-                    required: 'Email is required',
-                    pattern: { value: /^\S+@\S+\.\S+$/, message: 'Enter valid email' }
-                  })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
-                  placeholder="Enter email address"
-                />
-                {errors.email && <p className="mt-1 text-sm text-theme-heart">{errors.email.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone</label>
-                <input
-                  type="tel"
-                  {...register('phone', {
-                    required: 'Phone is required',
-                    pattern: { value: /^[0-9]{10}$/, message: 'Enter valid 10-digit phone number' }
-                  })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
-                  placeholder="Enter phone number"
-                />
-                {errors.phone && <p className="mt-1 text-sm text-theme-heart">{errors.phone.message}</p>}
-              </div>
-            </div>
-
-            <h4 className="text-lg font-medium text-gray-900 mt-8">Contact Person Details</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
-                <input
-                  type="text"
-                  {...register('contactPersonName', { required: 'Contact person name is required' })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
-                  placeholder="Enter contact person name"
-                />
-                {errors.contactPersonName && <p className="mt-1 text-sm text-theme-heart">{errors.contactPersonName.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Designation</label>
-                <input
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
-                  placeholder="Enter designation"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone</label>
-                <input
-                  type="tel"
-                  {...register('contactPersonPhone', {
-                    required: 'Contact person phone is required',
-                    pattern: { value: /^[0-9]{10}$/, message: 'Enter valid 10-digit phone number' }
-                  })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
-                  placeholder="Enter contact person phone"
-                />
-                {errors.contactPersonPhone && <p className="mt-1 text-sm text-theme-heart">{errors.contactPersonPhone.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                <input
-                  type="email"
-                  {...register('contactPersonEmail', {
-                    required: 'Contact person email is required',
-                    pattern: { value: /^\S+@\S+\.\S+$/, message: 'Enter valid email' }
-                  })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
-                  placeholder="Enter contact person email"
-                />
-                {errors.contactPersonEmail && <p className="mt-1 text-sm text-theme-heart">{errors.contactPersonEmail.message}</p>}
-              </div>
-            </div>
-          </motion.div>
-        );
-
-      case 4:
-        return (
-          <motion.div
-            variants={variants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="space-y-6"
-          >
-            <h3 className="text-xl font-semibold bg-gradient-to-r from-theme-nature via-primary-500 to-theme-heart bg-clip-text text-transparent dark:from-theme-paw dark:via-theme-sky dark:to-theme-heart">Organization Type & Focus Areas</h3>
-            <div className="grid grid-cols-1 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Organization Type</label>
-                <select
-                  {...register('organizationType', { required: 'Organization type is required' })}
-                  className="mt-1 block w-full rounded-md border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark shadow-sm focus:border-theme-nature focus:ring-theme-nature dark:focus:border-theme-heart dark:focus:ring-theme-heart transition-all"
-                >
-                  <option value="">Select Type</option>
-                  <option value="Animal Welfare">Animal Welfare</option>
-                  <option value="Wildlife Conservation">Wildlife Conservation</option>
-                  <option value="Pet Adoption">Pet Adoption</option>
-                  <option value="Other">Other</option>
-                </select>
-                {errors.organizationType && <p className="mt-1 text-sm text-theme-heart">{errors.organizationType.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Focus Areas</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Focus Areas <span className="text-theme-heart">*</span></label>
                 <div className="mt-2 space-y-2">
-                  {['Animal Welfare', 'Wildlife Conservation', 'Pet Adoption', 'Other'].map((area) => (
-                    <label key={area} className="inline-flex items-center mr-6">
+                  {['Animal Rescue', 'Pet Adoption', 'Wildlife Conservation', 'Animal Sheltering', 'Animal Healthcare', 'Animal Rights Advocacy', 'Other'].map((area) => (
+                    <label key={area} className="inline-flex items-center mr-6 mb-2">
                       <input
                         type="checkbox"
                         value={area}
@@ -587,99 +519,147 @@ const RegistrationForm = () => {
                 </div>
                 {errors.focusAreas && <p className="mt-1 text-sm text-theme-heart">{errors.focusAreas.message}</p>}
               </div>
-            </div>
-          </motion.div>
-        );
 
-      case 5:
-        return (
-          <motion.div
-            variants={variants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="space-y-6"
-          >
-            <h3 className="text-xl font-semibold bg-gradient-to-r from-theme-nature via-primary-500 to-theme-heart bg-clip-text text-transparent dark:from-theme-paw dark:via-theme-sky dark:to-theme-heart">Document Upload</h3>
-            <div className="grid grid-cols-1 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Registration Certificate</label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark rounded-md">
-                  <div className="space-y-1 text-center">
-                    <svg
-                      className="mx-auto h-12 w-12 text-gray-400"
-                      stroke="currentColor"
-                      fill="none"
-                      viewBox="0 0 48 48"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <div className="flex text-sm text-gray-600">
-                      <label
-                        htmlFor="registration-certificate"
-                        className="relative cursor-pointer bg-white rounded-md font-medium text-theme-nature hover:text-theme-nature/90 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-theme-nature"
-                      >
-                        <span>Upload a file</span>
-                        <input
-                          id="registration-certificate"
-                          type="file"
-                          className="sr-only"
-                          onChange={(e) => handleFileChange(e, 'registrationCertificate')}
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Registration Certificate <span className="text-theme-heart">*</span> 
+                  <span className="text-xs text-gray-500 ml-2">(Please upload an image file)</span>
+                </label>
+                
+                {watch('registrationCertificateUrl') ? (
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between p-2 border rounded-md">
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className="h-16 w-16 rounded-md bg-cover bg-center" 
+                          style={{ backgroundImage: `url(${watch('registrationCertificateUrl')})` }}
                         />
-                      </label>
-                      <p className="pl-1">or drag and drop</p>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Uploaded successfully</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setValue('registrationCertificateUrl', '')}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
                     </div>
-                    <p className="text-xs text-gray-500">PDF up to 10MB</p>
                   </div>
-                </div>
-                {errors.registrationCertificate && (
-                  <p className="mt-1 text-sm text-theme-heart">{errors.registrationCertificate.message}</p>
+                ) : (
+                  <CldUploadWidget
+                    uploadPreset="ml_default"
+                    options={{
+                      maxFiles: 1,
+                      resourceType: "image",
+                    }}
+                    onSuccess={(result) => handleCloudinaryUpload(result as CloudinaryResult, 'registrationCertificateUrl')}
+                  >
+                    {({ open }) => (
+                      <button
+                        type="button"
+                        onClick={() => open()}
+                        className="w-full flex justify-center items-center px-6 pt-5 pb-6 border-2 border-dashed border-secondary-300 dark:border-border-dark rounded-md"
+                      >
+                        <div className="space-y-1 text-center">
+                          <svg
+                            className="mx-auto h-12 w-12 text-gray-400"
+                            stroke="currentColor"
+                            fill="none"
+                            viewBox="0 0 48 48"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <div className="flex text-sm text-gray-600 justify-center">
+                            <span className="relative cursor-pointer bg-white rounded-md font-medium text-theme-nature hover:text-theme-nature/90">
+                              Upload Registration Certificate
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG, JPEG up to 10MB</p>
+                        </div>
+                      </button>
+                    )}
+                  </CldUploadWidget>
+                )}
+                {errors.registrationCertificateUrl && (
+                  <p className="mt-1 text-sm text-theme-heart">{errors.registrationCertificateUrl.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">PAN Card</label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-secondary-300 dark:border-border-dark bg-white dark:bg-card-dark rounded-md">
-                  <div className="space-y-1 text-center">
-                    <svg
-                      className="mx-auto h-12 w-12 text-gray-400"
-                      stroke="currentColor"
-                      fill="none"
-                      viewBox="0 0 48 48"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <div className="flex text-sm text-gray-600">
-                      <label
-                        htmlFor="pan-card"
-                        className="relative cursor-pointer bg-white rounded-md font-medium text-theme-nature hover:text-theme-nature/90 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-theme-nature"
-                      >
-                        <span>Upload a file</span>
-                        <input
-                          id="pan-card"
-                          type="file"
-                          className="sr-only"
-                          onChange={(e) => handleFileChange(e, 'taxExemptionCertificate')}
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Tax Exemption Certificate (Optional)
+                  <span className="text-xs text-gray-500 ml-2">(Please upload an image file)</span>
+                </label>
+                
+                {watch('taxExemptionCertificateUrl') ? (
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between p-2 border rounded-md">
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className="h-16 w-16 rounded-md bg-cover bg-center" 
+                          style={{ backgroundImage: `url(${watch('taxExemptionCertificateUrl')})` }}
                         />
-                      </label>
-                      <p className="pl-1">or drag and drop</p>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Uploaded successfully</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setValue('taxExemptionCertificateUrl', '')}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
                     </div>
-                    <p className="text-xs text-gray-500">PDF up to 10MB</p>
                   </div>
-                </div>
-                {errors.taxExemptionCertificate && <p className="mt-1 text-sm text-theme-heart">{errors.taxExemptionCertificate.message}</p>}
+                ) : (
+                  <CldUploadWidget
+                    uploadPreset="ml_default"
+                    options={{
+                      maxFiles: 1,
+                      resourceType: "image",
+                    }}
+                    onSuccess={(result) => handleCloudinaryUpload(result as CloudinaryResult, 'taxExemptionCertificateUrl')}
+                  >
+                    {({ open }) => (
+                      <button
+                        type="button"
+                        onClick={() => open()}
+                        className="w-full flex justify-center items-center px-6 pt-5 pb-6 border-2 border-dashed border-secondary-300 dark:border-border-dark rounded-md"
+                      >
+                        <div className="space-y-1 text-center">
+                          <svg
+                            className="mx-auto h-12 w-12 text-gray-400"
+                            stroke="currentColor"
+                            fill="none"
+                            viewBox="0 0 48 48"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <div className="flex text-sm text-gray-600 justify-center">
+                            <span className="relative cursor-pointer bg-white rounded-md font-medium text-theme-nature hover:text-theme-nature/90">
+                              Upload Tax Exemption Certificate
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG, JPEG up to 10MB</p>
+                        </div>
+                      </button>
+                    )}
+                  </CldUploadWidget>
+                )}
+                {errors.taxExemptionCertificateUrl && (
+                  <p className="mt-1 text-sm text-theme-heart">{errors.taxExemptionCertificateUrl.message}</p>
+                )}
               </div>
             </div>
           </motion.div>
@@ -693,8 +673,8 @@ const RegistrationForm = () => {
   return (
     <div className="w-full">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-center text-gray-900">NGO Registration</h2>
-        <p className="mt-2 text-center text-gray-600">Complete the form below to register your NGO</p>
+        <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white">NGO Registration</h2>
+        <p className="mt-2 text-center text-gray-600 dark:text-gray-400">Complete the form below to register your NGO with Pashurakshak</p>
         {mounted && renderProgressBar()}
       </div>
 

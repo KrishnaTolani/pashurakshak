@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios, { AxiosError } from 'axios';
 import { toast } from 'react-hot-toast';
+import { setNgoAuthToken } from '@/utils/auth';
 
 // Define interface for error response
 interface ErrorResponse {
@@ -26,6 +27,8 @@ export default function LoginPage() {
       setIsLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       
+      console.log('Attempting login with API URL:', apiUrl);
+      
       const response = await axios.post(`${apiUrl}/api/ngo/login`, {
         email,
         password
@@ -35,33 +38,67 @@ export default function LoginPage() {
         }
       });
       
+      console.log('Login response received:', JSON.stringify(response.data, null, 2));
+      
       if (response.data.success) {
-        // Store the token and NGO info
-        const { token, ngo } = response.data.data;
+        // The actual response structure from the backend is:
+        // { success: true, token: "...", data: { id, name, email, status, state, district } }
+        const { token, data: ngoData } = response.data;
+        
+        // Check if ngo data exists
+        if (!ngoData) {
+          toast.error('Invalid response from server');
+          console.error('Missing ngo data in response:', response.data);
+          return;
+        }
+        
+        // Store token and NGO data in localStorage
         localStorage.setItem('ngoToken', token);
-        localStorage.setItem('ngoUser', JSON.stringify(ngo));
+        localStorage.setItem('ngoUser', JSON.stringify(ngoData));
+        
+        // Set token in cookie using auth utility
+        setNgoAuthToken(token);
         
         toast.success('Login successful!');
         
-        // Check the NGO status
-        if (ngo.status === 'approved') {
+        // Handle redirection based on NGO status
+        if (ngoData.status === 'approved') {
+          console.log('NGO approved, redirecting to dashboard');
           router.push('/dashboard');
+        } else if (ngoData.id) {
+          console.log('NGO not approved, redirecting to status page');
+          router.push(`/register/status?id=${ngoData.id}`);
         } else {
-          // If pending, show status page
-          router.push(`/register/status?id=${ngo.id}`);
+          console.log('NGO ID missing, redirecting to general status page');
+          router.push('/register/status');
         }
       } else {
         toast.error(response.data.message || 'Login failed');
       }
     } catch (error: unknown) {
       console.error('Login error:', error);
+      
+      // Detailed error logging
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ErrorResponse>;
+        console.error('Response status:', axiosError.response?.status);
+        console.error('Response data:', axiosError.response?.data);
+      }
+      
+      // Clear any previous success messages
+      toast.dismiss();
+      
       const axiosError = error as AxiosError<ErrorResponse>;
-      if (axiosError.response?.data?.message?.includes('pending')) {
-        toast.error('Your NGO registration is pending approval');
-      } else if (axiosError.response?.data?.message?.includes('rejected')) {
-        toast.error('Your NGO registration has been rejected');
+      if (axiosError.response?.data?.message) {
+        if (axiosError.response.data.message.includes('not approved')) {
+          toast.error('Your NGO registration is pending approval');
+        } else if (axiosError.response.data.message.includes('rejected')) {
+          toast.error('Your NGO registration has been rejected');
+        } else {
+          toast.error(axiosError.response.data.message);
+        }
       } else {
-        toast.error(axiosError.response?.data?.message || 'Invalid credentials');
+        toast.error('Invalid credentials');
       }
     } finally {
       setIsLoading(false);

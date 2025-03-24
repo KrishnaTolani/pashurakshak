@@ -4,9 +4,31 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { RiSunLine, RiMoonClearLine } from 'react-icons/ri';
 import { FiLogOut } from 'react-icons/fi';
+import { usePathname } from 'next/navigation';
+import { logout, logoutNgo } from '@/utils/auth';
+import { useEffect, useState } from 'react';
 
 export function Navbar() {
   const { theme, setTheme } = useTheme();
+  const pathname = usePathname();
+  const [userType, setUserType] = useState<'admin' | 'ngo' | null>(null);
+
+  useEffect(() => {
+    // Determine user type based on path or localStorage
+    if (pathname?.startsWith('/admin')) {
+      setUserType('admin');
+    } else if (localStorage.getItem('ngoToken')) {
+      setUserType('ngo');
+    }
+  }, [pathname]);
+
+  const handleLogout = () => {
+    if (userType === 'admin') {
+      logout(); // Admin logout
+    } else {
+      logoutNgo(); // NGO logout
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border dark:border-border-dark bg-card/95 backdrop-blur-lg dark:bg-gradient-to-r dark:from-card-dark dark:to-muted-dark/95">
@@ -25,9 +47,16 @@ export function Navbar() {
                 </div>
               </div>
             </Link>
-            <div className="h-8 w-[1px] bg-border dark:bg-border-dark mx-2" />
-            <span className="text-sm font-medium text-muted-foreground/70 dark:text-foreground-dark/50">Admin</span>
+            {userType && (
+              <>
+                <div className="h-8 w-[1px] bg-border dark:bg-border-dark mx-2" />
+                <span className="text-sm font-medium text-muted-foreground/70 dark:text-foreground-dark/50">
+                  {userType === 'admin' ? 'Admin' : 'NGO'}
+                </span>
+              </>
+            )}
           </div>
+          
           <div className="flex items-center gap-4 pr-6">
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -43,13 +72,16 @@ export function Navbar() {
                 )}
               </div>
             </button>
-            <Link 
-              href="/login" 
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors duration-200 dark:bg-theme-heart/10 dark:text-theme-heart dark:hover:bg-theme-heart/20"
-            >
-              <FiLogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </Link>
+            
+            {userType && (
+              <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors duration-200 dark:bg-theme-heart/10 dark:text-theme-heart dark:hover:bg-theme-heart/20"
+              >
+                <FiLogOut className="w-5 h-5" />
+                <span>Logout</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
