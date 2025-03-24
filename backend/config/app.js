@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fileUpload = require('express-fileupload');
+const fs = require('fs');
 
 const createApp = () => {
   const app = express();
@@ -21,13 +22,19 @@ const createApp = () => {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   
-  // Add file upload middleware
+  // Create /tmp directory if it doesn't exist
+  const tmpDir = '/tmp';
+  if (!fs.existsSync(tmpDir)) {
+    fs.mkdirSync(tmpDir, { recursive: true });
+  }
+  
+  // Add file upload middleware with Vercel-compatible configuration
   app.use(fileUpload({
     useTempFiles: true,
-    tempFileDir: path.join(__dirname, '../uploads/tmp'),
+    tempFileDir: tmpDir,
     createParentPath: true,
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-    debug: true, // Enable debugging
+    debug: true,
     abortOnLimit: true,
     responseOnLimit: 'File size limit has been reached'
   }));
