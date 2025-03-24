@@ -4,6 +4,7 @@ const { register, login, forgotPassword, resetPassword } = require('../controlle
 const User = require('../models/User');
 const emailService = require('../utils/emailService');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 // User Registration (was NGO Registration before)
 router.post('/register', async (req, res) => {
@@ -94,5 +95,46 @@ router.post('/login', async (req, res) => {
 
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password/:token', resetPassword);
+
+// Render the reset password page when users click on the link in the email
+router.get('/reset-password/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    // Hash the token to compare with stored hash
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+    
+    // Find user with valid token and expiration
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+    
+    if (!user) {
+      return res.render('resetPasswordPage', {
+        validToken: false,
+        error: 'Password reset token is invalid or has expired',
+        token: ''
+      });
+    }
+    
+    // Render the password reset page
+    return res.render('resetPasswordPage', {
+      validToken: true,
+      error: '',
+      token: token
+    });
+  } catch (error) {
+    console.error('Reset password page error:', error);
+    res.render('resetPasswordPage', {
+      validToken: false,
+      error: 'An error occurred. Please try again.',
+      token: ''
+    });
+  }
+});
 
 module.exports = router;
