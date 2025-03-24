@@ -2,9 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { toast } from 'react-hot-toast';
 import { setAuthToken, isAuthenticated } from '@/utils/auth';
+
+interface ErrorResponse {
+  message?: string;
+  error?: string;
+}
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -52,9 +57,10 @@ export default function AdminLoginPage() {
         console.error('Login failed:', response.data.message);
         toast.error(response.data.message || 'Login failed');
       }
-    } catch (error: any) {
-      console.error('Login error:', error.response || error);
-      toast.error(error.response?.data?.message || 'Invalid credentials');
+    } catch (error: unknown) {
+      console.error('Login error:', error);
+      const axiosError = error as AxiosError<ErrorResponse>;
+      toast.error(axiosError.response?.data?.message || 'Invalid credentials');
     } finally {
       setIsLoading(false);
     }

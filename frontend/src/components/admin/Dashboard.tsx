@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState, useCallback } from 'react';
+import axios, { AxiosError } from 'axios';
 import { useRouter } from 'next/router';
 
 interface NGO {
@@ -20,12 +20,31 @@ interface NGO {
 export default function AdminDashboard() {
   const [ngos, setNgos] = useState<NGO[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [selectedNgoId, setSelectedNgoId] = useState<string | null>(null);
   const router = useRouter();
+
+  const fetchNGOs = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.get('${process.env.NEXT_PUBLIC_API_URL}/api/ngo/pending', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNgos(response.data);
+    } catch (error) {
+      const axiosError = error as AxiosError<{message?: string}>;
+      setError(axiosError.response?.data?.message || 'Error fetching NGOs');
+      if (axiosError.response?.status === 401) {
+        localStorage.removeItem('adminToken');
+        router.push('/admin/login');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -35,25 +54,7 @@ export default function AdminDashboard() {
     }
 
     fetchNGOs();
-  }, []);
-
-  const fetchNGOs = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const response = await axios.get('${process.env.NEXT_PUBLIC_API_URL}/api/ngo/pending', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setNgos(response.data);
-    } catch (error: any) {
-      setError(error.response?.data?.message || 'Error fetching NGOs');
-      if (error.response?.status === 401) {
-        localStorage.removeItem('adminToken');
-        router.push('/admin/login');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [fetchNGOs, router]);
 
   const handleApprove = async (id: string) => {
     try {
@@ -65,8 +66,9 @@ export default function AdminDashboard() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setNgos(ngos.filter(ngo => ngo._id !== id));
-    } catch (error: any) {
-      setError(error.response?.data?.message || 'Error approving NGO');
+    } catch (error) {
+      const axiosError = error as AxiosError<{message?: string}>;
+      setError(axiosError.response?.data?.message || 'Error approving NGO');
     } finally {
       setActionInProgress(null);
     }
@@ -87,8 +89,9 @@ export default function AdminDashboard() {
       setShowRejectionModal(false);
       setRejectionReason('');
       setSelectedNgoId(null);
-    } catch (error: any) {
-      setError(error.response?.data?.message || 'Error rejecting NGO');
+    } catch (error) {
+      const axiosError = error as AxiosError<{message?: string}>;
+      setError(axiosError.response?.data?.message || 'Error rejecting NGO');
     } finally {
       setActionInProgress(null);
     }
