@@ -5,28 +5,25 @@ import { useRouter } from 'next/navigation';
 import { isAuthenticated, isNgoAuthenticated } from '@/utils/auth';
 
 // Higher Order Component for protecting routes
-export function withAuth<P extends object>(
-  Component: ComponentType<P>,
-  type: 'admin' | 'ngo'
-) {
-  return function WithAuth(props: P) {
-    const router = useRouter();
+export function withAuth<P extends object>(Component: ComponentType<P>, type: 'admin' | 'ngo') {
+    return function WithAuth(props: P) {
+        const router = useRouter();
 
-    useEffect(() => {
-      const checkAuth = () => {
-        if (type === 'admin' && !isAuthenticated()) {
-          router.push('/admin/login');
-        } else if (type === 'ngo' && !isNgoAuthenticated()) {
-          router.push('/login');
-        }
-      };
-      
-      checkAuth();
-    }, [router]);
+        useEffect(() => {
+            const checkAuth = () => {
+                if (type === 'admin' && !isAuthenticated()) {
+                    router.push('/admin/login');
+                } else if (type === 'ngo' && !isNgoAuthenticated()) {
+                    router.push('/login');
+                }
+            };
 
-    return <Component {...props} />;
-  };
+            checkAuth();
+        }, [router]);
+
+        return <Component {...props} />;
+    };
 }
 
 // Example usage:
-// const ProtectedComponent = withAuth(MyComponent, 'admin'); 
+// const ProtectedComponent = withAuth(MyComponent, 'admin');

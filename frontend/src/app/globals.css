@@ -3,74 +3,74 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: #EDF1F5;
-    --foreground: #1A1A1A;
-  }
+    :root {
+        --background: #edf1f5;
+        --foreground: #1a1a1a;
+    }
 
-  .dark {
-    --background: #1F2937;
-    --foreground: #F9FAFB;
-  }
+    .dark {
+        --background: #1f2937;
+        --foreground: #f9fafb;
+    }
 
-  body {
-    @apply bg-background text-foreground dark:bg-background-dark dark:text-foreground-dark;
-  }
+    body {
+        @apply bg-background text-foreground dark:bg-background-dark dark:text-foreground-dark;
+    }
 }
 
 @layer components {
-  /* Base card styles for light theme */
-  .card {
-    @apply rounded-lg p-6 transition-all duration-200;
-    background-color: white;
-    border: 2px solid #C3F0E0;
-    box-shadow: 0 4px 12px rgba(168, 230, 207, 0.2);
-  }
+    /* Base card styles for light theme */
+    .card {
+        @apply rounded-lg p-6 transition-all duration-200;
+        background-color: white;
+        border: 2px solid #c3f0e0;
+        box-shadow: 0 4px 12px rgba(168, 230, 207, 0.2);
+    }
 
-  /* Card hover effects for light theme */
-  .card:hover {
-    border-color: #A8E6CF;
-    box-shadow: 0 8px 16px rgba(168, 230, 207, 0.3);
-  }
+    /* Card hover effects for light theme */
+    .card:hover {
+        border-color: #a8e6cf;
+        box-shadow: 0 8px 16px rgba(168, 230, 207, 0.3);
+    }
 
-  /* Dark theme overrides */
-  .dark .card {
-    background-color: #242B3D;
-    border-color: #303B55;
-    box-shadow: none;
-  }
+    /* Dark theme overrides */
+    .dark .card {
+        background-color: #242b3d;
+        border-color: #303b55;
+        box-shadow: none;
+    }
 
-  .dark .card:hover {
-    border-color: #3D4663;
-  }
+    .dark .card:hover {
+        border-color: #3d4663;
+    }
 
-  .hover-lift {
-    @apply transition-all duration-200 hover:-translate-y-1;
-  }
+    .hover-lift {
+        @apply transition-all duration-200 hover:-translate-y-1;
+    }
 
-  .nav-item-active {
-    @apply bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400;
-  }
+    .nav-item-active {
+        @apply bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400;
+    }
 
-  .nav-item-hover {
-    @apply hover:bg-secondary-50 hover:text-secondary-700 dark:hover:bg-secondary-800/50 dark:hover:text-secondary-300;
-  }
+    .nav-item-hover {
+        @apply hover:bg-secondary-50 hover:text-secondary-700 dark:hover:bg-secondary-800/50 dark:hover:text-secondary-300;
+    }
 
-  .brand-link {
-    @apply transition-all duration-300;
-  }
+    .brand-link {
+        @apply transition-all duration-300;
+    }
 
-  .font-montserrat {
-    font-family: var(--font-montserrat), sans-serif;
-  }
+    .font-montserrat {
+        font-family: var(--font-montserrat), sans-serif;
+    }
 
-  /* Content area background - Light theme */
-  .content-pattern {
-    background-color: #EDF1F5;
-  }
+    /* Content area background - Light theme */
+    .content-pattern {
+        background-color: #edf1f5;
+    }
 
-  /* Dark theme background */
-  .dark .content-pattern {
-    background-color: #1A1F2E;
-  }
+    /* Dark theme background */
+    .dark .content-pattern {
+        background-color: #1a1f2e;
+    }
 }
