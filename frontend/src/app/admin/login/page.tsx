@@ -30,9 +30,7 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      console.log('Attempting login with URL:', `${apiUrl}/api/admin/login`);
-      
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;      
       const response = await axios.post(`${apiUrl}/api/admin/login`, {
         email,
         password
@@ -41,8 +39,6 @@ export default function AdminLoginPage() {
           'Content-Type': 'application/json'
         }
       });
-
-      console.log('Login response:', response.data);
 
       if (response.data.success) {
         const { token, user } = response.data.data;

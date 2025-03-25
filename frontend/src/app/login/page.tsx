@@ -28,6 +28,17 @@ export default function LoginPage() {
     router.prefetch('/requests');
     router.prefetch('/volunteers');
     router.prefetch('/animals');
+    
+    // Clear any pending redirects from previous sessions
+    localStorage.removeItem('pendingRedirect');
+    
+    return () => {
+      // If we're unmounting without a redirect happening, clear the flag
+      // This prevents unintended redirects if user navigates away
+      if (localStorage.getItem('pendingRedirect') === 'dashboard') {
+        localStorage.removeItem('pendingRedirect');
+      }
+    };
   }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -35,9 +46,7 @@ export default function LoginPage() {
     try {
       setIsLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      
-      console.log('Attempting login with API URL:', apiUrl);
-      
+            
       const response = await axios.post(`${apiUrl}/api/ngo/login`, {
         email,
         password
@@ -46,9 +55,7 @@ export default function LoginPage() {
           'Content-Type': 'application/json'
         }
       });
-      
-      console.log('Login response received:', JSON.stringify(response.data, null, 2));
-      
+            
       if (response.data.success) {
         // The actual response structure from the backend is:
         // { success: true, token: "...", data: { id, name, email, status, state, district } }
@@ -57,7 +64,6 @@ export default function LoginPage() {
         // Check if ngo data exists
         if (!ngoData) {
           toast.error('Invalid response from server');
-          console.error('Missing ngo data in response:', response.data);
           return;
         }
         
@@ -68,21 +74,28 @@ export default function LoginPage() {
         // Set token in cookie using auth utility
         setNgoAuthToken(token);
         
-        toast.success('Login successful! Redirecting to dashboard...');
-        
-        // Handle redirection based on NGO status
         if (ngoData.status === 'approved') {
-          console.log('NGO approved, redirecting to dashboard');
           
-          // More reliable Next.js specific navigation pattern
-          // First cache the route
+          // Set a success flag in localStorage to handle redirect after page reload
+          localStorage.setItem('pendingRedirect', 'dashboard');
+          
+          // Show success toast
+          toast.success('Login successful! Redirecting to dashboard...');
+          
+          // First update router cache for faster navigation after redirect
           await router.prefetch('/dashboard');
           
-          // Use a small timeout to ensure the toast is visible
+          // Try Next.js navigation first
+          router.push('/dashboard');
+          
+          // Fallback: Use a more forceful approach with a short delay
           setTimeout(() => {
-            // Use router.replace for a cleaner navigation (no history entry)
-            router.replace('/dashboard');
-          }, 500);
+            const pendingRedirect = localStorage.getItem('pendingRedirect');
+            if (pendingRedirect === 'dashboard') {
+              // Force hard navigation if Next.js navigation doesn't complete
+              window.location.href = '/dashboard';
+            }
+          }, 1000);
         } else {
           // Display appropriate message for non-approved NGOs
           if (ngoData.status === 'pending') {

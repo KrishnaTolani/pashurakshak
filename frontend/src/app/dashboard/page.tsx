@@ -35,6 +35,11 @@ export default function DashboardPage() {
 
   // Optimized prefetching strategy with Next.js features
   useEffect(() => {
+    // Clear any pending redirects since we successfully reached the dashboard
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('pendingRedirect');
+    }
+    
     // Prefetch routes using Next.js priority-based approach
     const prefetchAllRoutes = async () => {
       // First prefetch critical routes
