@@ -26,7 +26,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} ${montserrat.variable}`}>
         <Providers>
-          <Toaster position="top-right" />
+          <Toaster position="bottom-center" />
           <div className="flex h-screen flex-col overflow-x-hidden">
             <Navbar />
             <div className="flex flex-1 overflow-hidden">

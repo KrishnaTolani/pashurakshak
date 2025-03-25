@@ -20,7 +20,7 @@ export default function RegisterPage() {
             </p>
           </div>
           
-          <Toaster position="top-right" />
+          <Toaster position="bottom-center" />
           <RegistrationForm />
         </div>
       </div>
