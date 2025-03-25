@@ -1,5 +1,12 @@
 import axios from 'axios';
 
+// Define a simple router interface with the methods we need
+interface RouterLike {
+  push(url: string): void;
+  replace(url: string): void;
+  prefetch?(url: string): void;
+}
+
 // Helper to get token and set axios header
 export const getAuthToken = () => {
   if (typeof window !== 'undefined') {
@@ -70,6 +77,7 @@ const clearAllAuthData = () => {
   localStorage.removeItem('adminUser');
   localStorage.removeItem('ngoToken');
   localStorage.removeItem('ngoUser');
+  localStorage.removeItem('pendingRedirect');
   
   // Clear cookies
   document.cookie = 'adminToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
@@ -79,7 +87,42 @@ const clearAllAuthData = () => {
   delete axios.defaults.headers.common['Authorization'];
 };
 
-// Logout functions
+// Next.js friendly logout functions that accept a router
+export const logoutWithRouter = (router: RouterLike | null) => {
+  clearAllAuthData();
+  
+  if (router) {
+    // Use Next.js navigation
+    router.push('/admin/login');
+  } else {
+    // Fallback to direct navigation
+    window.location.href = '/admin/login';
+  }
+};
+
+export const logoutNgoWithRouter = (router: RouterLike | null) => {
+  clearAllAuthData();
+  
+  if (router) {
+    // Use Next.js navigation
+    router.push('/login');
+  } else {
+    // Fallback to direct navigation
+    window.location.href = '/login';
+  }
+};
+
+export const smartLogoutWithRouter = (router: RouterLike | null) => {
+  clearAllAuthData();
+  
+  if (router) {
+    router.push('/login');
+  } else {
+    window.location.href = '/login';
+  }
+};
+
+// Legacy methods for backward compatibility
 export const logout = () => {
   clearAllAuthData();
   window.location.href = '/admin/login';
@@ -89,17 +132,3 @@ export const logoutNgo = () => {
   clearAllAuthData();
   window.location.href = '/login';
 };
-
-// Smart logout - detects user type and redirects accordingly
-export const smartLogout = () => {
-  // Check current path to determine context
-  const isAdminPath = window.location.pathname.startsWith('/admin');
-  clearAllAuthData();
-  
-  // Prefer NGO context unless explicitly in admin context
-  if (isAdminPath) {
-    window.location.href = '/admin/login';
-  } else {
-    window.location.href = '/login';
-  }
-}; 
