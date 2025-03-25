@@ -1,11 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { FiActivity, FiHeart, FiUsers } from 'react-icons/fi';
 import { PiDogFill, PiPawPrintFill } from 'react-icons/pi';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+
+// Define all NGO routes for prefetching
+const NGO_ROUTES = [
+  '/',
+  '/dashboard',
+  '/requests',
+  '/volunteers',
+  '/animals'
+];
 
 // In future, this will be replaced with real-time data
 interface DashboardStats {
@@ -24,8 +33,33 @@ export default function DashboardPage() {
     completed: 0
   });
 
-  // Simulate real-time updates
+  // Optimized prefetching strategy with Next.js features
   useEffect(() => {
+    // Prefetch routes using Next.js priority-based approach
+    const prefetchAllRoutes = async () => {
+      // First prefetch critical routes
+      const criticalRoutes = ['/dashboard', '/requests'];
+      for (const route of criticalRoutes) {
+        await router.prefetch(route);
+      }
+
+      // Then prefetch remaining routes with lower priority
+      const remainingRoutes = NGO_ROUTES.filter(route => !criticalRoutes.includes(route));
+      remainingRoutes.forEach(route => {
+        router.prefetch(route);
+      });
+    };
+
+    prefetchAllRoutes();
+
+    // Initialize data
+    setStats({
+      requests: 12,
+      volunteers: 8,
+      animals: 24,
+      completed: 6
+    });
+
     // In future: Replace with WebSocket/SSE connection
     const interval = setInterval(() => {
       // Simulate stats update
@@ -38,14 +72,15 @@ export default function DashboardPage() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [router]);
 
   // Handle hover-based prefetching
-  const handleHover = (href: string) => {
+  const handleHover = useCallback((href: string) => {
+    // Prefetch the route again to ensure it's fresh in the cache
     router.prefetch(href);
     // In future: Trigger data prefetch for the route
     // prefetchRouteData(href);
-  };
+  }, [router]);
 
   return (
     <ProtectedRoute type="ngo">

@@ -261,7 +261,9 @@ const RegistrationForm = () => {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    
+    router.prefetch('/login');
+  }, [router]);
 
   // Validate the current step before proceeding
   const validateCurrentStep = async () => {
@@ -360,9 +362,13 @@ const RegistrationForm = () => {
           { duration: 6000 }
         );
         
-        // Redirect to login page directly instead of status page
+        // Ensure login route is prefetched for faster navigation
+        await router.prefetch('/login');
+        
+        // Redirect to login page with a small delay to ensure toast is visible
         setTimeout(() => {
-          router.push('/login');
+          // Use Next.js router.replace for a cleaner navigation without browser history entry
+          router.replace('/login');
         }, 3000);
       } else {
         throw new Error(response.data.message || 'Registration failed');

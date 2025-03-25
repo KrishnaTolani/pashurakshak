@@ -6,6 +6,7 @@ import { FiHome, FiUsers } from 'react-icons/fi';
 import { PiDogFill, PiPawPrintFill } from 'react-icons/pi';
 import { useEffect, useCallback } from 'react';
 
+// Define all navigation items including potential future routes
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', Icon: FiHome },
   { name: 'Rescue Requests', href: '/requests', Icon: PiPawPrintFill },
@@ -16,19 +17,24 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-
-  // Prefetch all routes on mount
+  
+  // More efficient prefetching using Next.js patterns
   useEffect(() => {
-    navigation.forEach((item) => {
-      router.prefetch(item.href);
-    });
+    // Prefetch immediate navigation routes with higher priority
+    const prefetchRoutes = async () => {
+      // First prefetch current navigation items
+      for (const item of navigation) {
+        await router.prefetch(item.href);
+      }
+
+    };
+    
+    prefetchRoutes();
   }, [router]);
 
   // Handle hover-based prefetching
   const handleHover = useCallback((href: string) => {
     router.prefetch(href);
-    // In future: Trigger data prefetch for the route
-    // prefetchRouteData(href);
   }, [router]);
 
   return (

@@ -2,7 +2,7 @@
 
 import { FiLock, FiMail, FiEye, FiEyeOff } from 'react-icons/fi';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios, { AxiosError } from 'axios';
 import { toast } from 'react-hot-toast';
@@ -20,6 +20,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Prefetch all potential NGO routes on component mount
+  useEffect(() => {
+    // Prefetch dashboard and other key NGO routes
+    router.prefetch('/dashboard');
+    router.prefetch('/requests');
+    router.prefetch('/volunteers');
+    router.prefetch('/animals');
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,12 +68,21 @@ export default function LoginPage() {
         // Set token in cookie using auth utility
         setNgoAuthToken(token);
         
-        toast.success('Login successful!');
+        toast.success('Login successful! Redirecting to dashboard...');
         
         // Handle redirection based on NGO status
         if (ngoData.status === 'approved') {
           console.log('NGO approved, redirecting to dashboard');
-          router.push('/dashboard');
+          
+          // More reliable Next.js specific navigation pattern
+          // First cache the route
+          await router.prefetch('/dashboard');
+          
+          // Use a small timeout to ensure the toast is visible
+          setTimeout(() => {
+            // Use router.replace for a cleaner navigation (no history entry)
+            router.replace('/dashboard');
+          }, 500);
         } else {
           // Display appropriate message for non-approved NGOs
           if (ngoData.status === 'pending') {

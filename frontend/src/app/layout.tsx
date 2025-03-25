@@ -6,10 +6,15 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Providers } from './providers';
 import { Toaster } from 'react-hot-toast';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: 'swap'
+});
+
 const montserrat = Montserrat({ 
   subsets: ["latin"],
-  variable: "--font-montserrat"
+  variable: "--font-montserrat",
+  display: 'swap'
 });
 
 export const metadata: Metadata = {

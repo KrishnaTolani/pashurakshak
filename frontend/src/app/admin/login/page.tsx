@@ -21,6 +21,7 @@ export default function AdminLoginPage() {
     // Redirect to dashboard if already authenticated
     if (isAuthenticated()) {
       router.push('/admin/dashboard');
+      return;
     }
   }, [router]);
 
@@ -51,8 +52,17 @@ export default function AdminLoginPage() {
         localStorage.setItem('adminToken', token);
         localStorage.setItem('adminUser', JSON.stringify(user));
 
-        toast.success('Login successful!');
-        router.push('/admin/dashboard');
+        toast.success('Login successful! Redirecting to dashboard...');
+        
+        // More reliable Next.js specific navigation pattern
+        // First ensure the route is prefetched
+        await router.prefetch('/admin/dashboard');
+        
+        // Use a small timeout to ensure the toast is visible
+        setTimeout(() => {
+          // Use router.replace for a cleaner navigation (no history entry)
+          router.replace('/admin/dashboard');
+        }, 500);
       } else {
         console.error('Login failed:', response.data.message);
         toast.error(response.data.message || 'Login failed');
