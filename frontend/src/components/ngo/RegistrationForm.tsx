@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import { motion, Variants } from 'framer-motion';
@@ -64,7 +64,7 @@ const progressVariants: Variants = {
     initial: { width: 0 },
     animate: (progress: number) => ({
         width: `${progress}%`,
-        transition: { duration: 0.3 },
+        transition: { duration: 0.5, ease: 'easeOut' },
     }),
 };
 
@@ -284,14 +284,91 @@ const RegistrationForm = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const totalSteps = 3; // Reduced to 3 meaningful steps
     const [mounted, setMounted] = useState(false);
+    const [formProgress, setFormProgress] = useState(0);
     const router = useRouter();
+
+    // Required fields by step - wrapped in useMemo to prevent recreation on every render
+    const requiredFieldsByStep = useMemo(
+        () => ({
+            1: [
+                'name',
+                'email',
+                'password',
+                'confirmPassword',
+                'organizationType',
+                'registrationNumber',
+            ],
+            2: [
+                'contactPersonName',
+                'contactPersonPhone',
+                'contactPersonEmail',
+                'street',
+                'city',
+                'state',
+                'pincode',
+            ],
+            3: ['focusAreas', 'registrationCertificateUrl'],
+        }),
+        []
+    );
+
+    // Total number of required fields across all steps
+    const totalRequiredFields = useMemo(
+        () => Object.values(requiredFieldsByStep).flat().length,
+        [requiredFieldsByStep]
+    );
 
     // Watch for password to compare with confirmPassword
     const password = watch('password');
 
+    // Watch all fields to calculate progress
+    const allFields = watch();
+
+    // Update form progress based on completed fields
+    useEffect(() => {
+        if (!mounted) return;
+
+        let completedFields = 0;
+        let hasFocusAreas = false;
+
+        // Calculate completed required fields
+        Object.entries(requiredFieldsByStep).forEach(entry => {
+            const fields = entry[1]; // Get the fields array without using the key
+
+            fields.forEach(field => {
+                // Special handling for focusAreas
+                if (field === 'focusAreas') {
+                    if (allFields.focusAreas && allFields.focusAreas.length > 0) {
+                        if (!hasFocusAreas) {
+                            completedFields++;
+                            hasFocusAreas = true;
+                        }
+                    }
+                    return;
+                }
+
+                const fieldValue = allFields[field as keyof RegistrationFormData];
+
+                // Check if field is filled and valid
+                if (fieldValue) {
+                    if (Array.isArray(fieldValue)) {
+                        if (fieldValue.length > 0) completedFields++;
+                    } else if (typeof fieldValue === 'string') {
+                        if (fieldValue.trim() !== '') completedFields++;
+                    } else {
+                        completedFields++;
+                    }
+                }
+            });
+        });
+
+        // Calculate progress percentage
+        const progress = Math.round((completedFields / totalRequiredFields) * 100);
+        setFormProgress(progress);
+    }, [allFields, mounted, requiredFieldsByStep, totalRequiredFields]);
+
     useEffect(() => {
         setMounted(true);
-
         router.prefetch('/login');
     }, [router]);
 
@@ -444,23 +521,31 @@ const RegistrationForm = () => {
         url: string,
         fieldName: 'registrationCertificateUrl' | 'taxExemptionCertificateUrl'
     ) => {
-        setValue(fieldName, url);
+        setValue(fieldName, url, { shouldDirty: true, shouldValidate: true });
         // Trigger validation after setting the value
         trigger(fieldName);
     };
 
     const renderProgressBar = () => {
-        const progress = (currentStep / totalSteps) * 100;
         return (
-            <div className="w-full bg-gradient-to-r from-theme-nature/20 to-primary-100 dark:from-theme-heart/20 dark:to-theme-heart/5 rounded-full h-2.5 mb-6">
-                <motion.div
-                    className="bg-gradient-to-r from-theme-nature to-primary-500 dark:from-theme-heart dark:to-theme-paw h-2.5 rounded-full"
-                    style={{ width: `${progress}%` }}
-                    variants={progressVariants}
-                    initial="hidden"
-                    animate="visible"
-                    custom={progress}
-                />
+            <div className="relative mb-8">
+                <div className="flex justify-between items-center mb-1">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Registration Progress
+                    </div>
+                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        {formProgress}%
+                    </div>
+                </div>
+                <div className="w-full bg-gradient-to-r from-theme-nature/20 to-primary-100 dark:from-theme-heart/20 dark:to-theme-heart/5 rounded-full h-2.5">
+                    <motion.div
+                        className="bg-gradient-to-r from-theme-nature to-primary-500 dark:from-theme-heart dark:to-theme-paw h-2.5 rounded-full"
+                        variants={progressVariants}
+                        initial="initial"
+                        animate="animate"
+                        custom={formProgress}
+                    />
+                </div>
             </div>
         );
     };
@@ -894,7 +979,10 @@ const RegistrationForm = () => {
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    setValue('registrationCertificateUrl', '')
+                                                    setValue('registrationCertificateUrl', '', {
+                                                        shouldDirty: true,
+                                                        shouldValidate: true,
+                                                    })
                                                 }
                                                 className="text-red-500 hover:text-red-700"
                                             >
@@ -944,7 +1032,10 @@ const RegistrationForm = () => {
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    setValue('taxExemptionCertificateUrl', '')
+                                                    setValue('taxExemptionCertificateUrl', '', {
+                                                        shouldDirty: true,
+                                                        shouldValidate: true,
+                                                    })
                                                 }
                                                 className="text-red-500 hover:text-red-700"
                                             >
@@ -978,15 +1069,7 @@ const RegistrationForm = () => {
 
     return (
         <div className="w-full">
-            <div className="mb-8">
-                <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
-                    NGO Registration
-                </h2>
-                <p className="mt-2 text-center text-gray-600 dark:text-gray-400">
-                    Complete the form below to register your NGO with Pashurakshak
-                </p>
-                {mounted && renderProgressBar()}
-            </div>
+            <div className="mb-8">{mounted && renderProgressBar()}</div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 {mounted && renderStepContent()}
