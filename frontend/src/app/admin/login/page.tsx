@@ -77,7 +77,7 @@ export default function AdminLoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-theme-nature/5 dark:from-background-dark dark:via-background-dark dark:to-theme-heart/5 p-4">
+        <div className="h-[calc(100vh-8rem)] flex items-center justify-center bg-gradient-to-br from-background via-background to-theme-nature/5 dark:from-background-dark dark:via-background-dark dark:to-theme-heart/5 p-4">
             <div className="max-w-md w-full bg-white dark:bg-card-dark rounded-2xl shadow-lg border-2 border-secondary-200 dark:border-border-dark relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-theme-nature/20 to-transparent rounded-full blur-3xl dark:from-theme-heart/10" />
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-theme-paw/20 to-transparent rounded-full blur-3xl dark:from-theme-nature/10" />

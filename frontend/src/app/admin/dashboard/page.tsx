@@ -144,9 +144,6 @@ export default function AdminDashboard() {
             return;
         }
 
-        // Log the URL for debugging
-        console.log(`Opening document: ${url}`);
-
         // Set the document to view
         setViewingDocument({ url, title });
     };
@@ -163,7 +160,7 @@ export default function AdminDashboard() {
 
     return (
         <ProtectedRoute type="admin">
-            <div className="min-h-screen bg-gray-50 dark:bg-background-dark">
+            <div className="h-[calc(100vh-8rem)] bg-gray-50 dark:bg-background-dark">
                 {/* Document Viewer Modal */}
                 {viewingDocument && (
                     <DocumentViewer
@@ -479,7 +476,7 @@ export default function AdminDashboard() {
                                 )}
                                 <button
                                     onClick={() => setShowDetailModal(false)}
-                                    className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-card-dark hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-card-dark hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     Close
                                 </button>
@@ -493,7 +490,7 @@ export default function AdminDashboard() {
                         <div className="flex justify-between h-16">
                             <div className="flex items-center">
                                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                                    Admin Dashboard
+                                    NGO Registrations
                                 </h1>
                             </div>
                         </div>
@@ -504,9 +501,6 @@ export default function AdminDashboard() {
                     <div className="px-4 py-6 sm:px-0">
                         <div className="bg-white dark:bg-card-dark shadow rounded-lg overflow-hidden">
                             <div className="px-4 py-5 sm:p-6">
-                                <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                                    NGO Registrations
-                                </h2>
                                 <div className="overflow-x-auto">
                                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                         <thead className="bg-gray-50 dark:bg-background-dark">

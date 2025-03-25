@@ -2,7 +2,7 @@
 
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { HeroUIProvider } from '@heroui/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { setNgoAuthToken, setAuthToken } from '@/utils/auth';
 
@@ -51,8 +51,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
         syncTokens();
     }, [router]);
 
+    const [forcedTheme, setForcedTheme] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        // Get saved theme preference from localStorage, or use system preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            setForcedTheme(undefined); // Let client-side take over once hydrated
+        }
+    }, []);
+
     return (
-        <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
+        <NextThemesProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            forcedTheme={forcedTheme}
+        >
             <HeroUIProvider>{children}</HeroUIProvider>
         </NextThemesProvider>
     );

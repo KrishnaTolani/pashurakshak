@@ -70,16 +70,6 @@ export function Sidebar() {
                     );
                 })}
             </nav>
-            <div className="p-6">
-                <div className="rounded-xl bg-gradient-to-r from-theme-nature/20 to-primary-50 p-4 dark:from-theme-heart/20 dark:to-theme-heart/5">
-                    <p className="text-xs font-medium text-primary-700 dark:text-theme-heart">
-                        Need Help?
-                    </p>
-                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                        Contact our support team for assistance with the admin panel.
-                    </p>
-                </div>
-            </div>
         </div>
     );
 }

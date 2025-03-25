@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className={`${inter.className} ${montserrat.variable}`}>
+            <body className={`${inter.className} ${montserrat.variable}`} suppressHydrationWarning>
                 <Providers>
                     <Toaster position="bottom-center" />
                     <div className="flex h-screen flex-col overflow-x-hidden">

@@ -13,6 +13,12 @@ export function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
     const [userType, setUserType] = useState<'admin' | 'ngo' | null>(null);
+    const [mounted, setMounted] = useState(false);
+
+    // This useEffect will only run on the client side
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
         // Determine user type based on path and available tokens
@@ -47,6 +53,29 @@ export function Navbar() {
         smartLogoutWithRouter(router);
     };
 
+    // Conditionally render content based on mounted state
+    // This ensures the icons don't cause hydration mismatches
+    const renderThemeToggle = () => {
+        if (!mounted) return null;
+
+        return (
+            <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="relative w-8 h-8 rounded-full flex items-center justify-center group"
+                aria-label="Toggle theme"
+            >
+                <div className="absolute inset-0 rounded-full bg-primary-50/80 dark:bg-theme-heart/20 opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
+                <div className="relative">
+                    {theme === 'dark' ? (
+                        <RiSunLine className="w-5 h-5 text-theme-heart transform transition-transform duration-150 ease-out group-hover:scale-110" />
+                    ) : (
+                        <RiMoonClearLine className="w-5 h-5 text-primary-600 transform transition-transform duration-150 ease-out group-hover:scale-110" />
+                    )}
+                </div>
+            </button>
+        );
+    };
+
     return (
         <nav className="sticky top-0 z-50 w-full border-b border-border dark:border-border-dark bg-card/95 backdrop-blur-lg dark:bg-gradient-to-r dark:from-card-dark dark:to-muted-dark/95">
             <div className="w-full">
@@ -73,20 +102,7 @@ export function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-4 pr-6">
-                        <button
-                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                            className="relative w-8 h-8 rounded-full flex items-center justify-center group"
-                            aria-label="Toggle theme"
-                        >
-                            <div className="absolute inset-0 rounded-full bg-primary-50/80 dark:bg-theme-heart/20 opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
-                            <div className="relative">
-                                {theme === 'dark' ? (
-                                    <RiSunLine className="w-5 h-5 text-theme-heart transform transition-transform duration-150 ease-out group-hover:scale-110" />
-                                ) : (
-                                    <RiMoonClearLine className="w-5 h-5 text-primary-600 transform transition-transform duration-150 ease-out group-hover:scale-110" />
-                                )}
-                            </div>
-                        </button>
+                        {renderThemeToggle()}
 
                         {userType && (
                             <button
