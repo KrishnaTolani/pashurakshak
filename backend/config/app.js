@@ -22,6 +22,7 @@ const createApp = () => {
         origin: '*',
         credentials: true
     }));
+    console.log('CORS middleware initialized.')
 
     app.use(express.json({ limit: '10mb' }));
     app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -31,9 +32,6 @@ const createApp = () => {
     if (!fs.existsSync(tmpDir)) {
         fs.mkdirSync(tmpDir, { recursive: true });
     }
-
-    // File upload middleware is now applied specifically in routes.js
-    // instead of globally here
 
     // Set up EJS as the view engine
     app.set('view engine', 'ejs');
