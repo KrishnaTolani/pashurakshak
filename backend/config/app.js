@@ -19,10 +19,8 @@ const createApp = () => {
 
     // Middleware
     app.use(cors({
-        origin: true,
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization']
+        origin: '*',
+        credentials: true
     }));
 
     app.use(express.json({ limit: '10mb' }));
