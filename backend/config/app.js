@@ -17,12 +17,6 @@ const fileUploadConfig = {
 const createApp = () => {
     const app = express();
 
-    // Determine allowed origins from environment
-    const allowedOrigins = [
-        process.env.FRONTEND_URL,
-        'http://localhost:3000'
-    ];
-
     // Middleware
     app.use(cors({
         origin: true,
