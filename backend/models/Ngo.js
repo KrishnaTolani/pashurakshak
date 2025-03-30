@@ -87,6 +87,10 @@ const ngoSchema = new mongoose.Schema({
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
   },
+  role: {
+    type: String,
+    default: 'ngo'
+  },
   createdAt: {
     type: Date,
     default: Date.now

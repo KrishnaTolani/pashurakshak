@@ -21,6 +21,8 @@ This document outlines all the completed API endpoints in the PashuRakshak appli
 | PUT    | /api/admin/registrations/:id      | Update NGO Registration Status     | Yes (Admin)  | application/json  |
 | GET    | /api/admin/ngo/:id                | Get Complete NGO Profile           | Yes (Admin)  | -                 |
 | POST   | /api/upload/image                 | Upload Image to Cloudinary         | No           | multipart/form-data |
+| POST   | /api/volunteers/add               | Add a New Volunteer                | Yes (NGO)    | application/json  |
+| DELETE | /api/volunteers/remove/:volunteerId| Remove a Volunteer                | Yes (NGO)    | -                 |
 
 ## Base URL
 ```
@@ -904,4 +906,61 @@ Here's a step-by-step workflow showing how the different APIs work together:
    POST /api/auth/login
    ```
 
-This API documentation provides a comprehensive guide to all the endpoints in the PashuRakshak system. 
+## Volunteer Management APIs
+
+### 1. Add Volunteer
+- **Endpoint**: `POST /api/volunteers/add`
+- **Authentication**: Required (NGO Token)
+- **Description**: Add a new volunteer to the NGO's team. The volunteer will be stored in MongoDB and linked to the NGO.
+- **Request Headers**:
+  ```
+  Authorization: Bearer ngo_token
+  Content-Type: application/json
+  ```
+- **Request Body**:
+  ```json
+  {
+      "name": "John Doe",
+      "email": "volunteer@example.com"
+  }
+  ```
+- **Success Response** (201):
+  ```json
+  {
+      "success": true,
+      "message": "Volunteer added successfully and welcome email sent",
+      "data": {
+          "id": "volunteer_id",
+          "name": "John Doe",
+          "email": "volunteer@example.com",
+          "createdAt": "timestamp",
+          "ngo": {
+              "id": "ngo_id",
+              "name": "NGO Name"
+          }
+      }
+  }
+  ```
+
+### 2. Remove Volunteer
+- **Endpoint**: `DELETE /api/volunteers/remove/:volunteerId`
+- **Authentication**: Required (NGO Token)
+- **Description**: Remove a volunteer using their MongoDB ID. Only the NGO that added the volunteer can remove them.
+- **Request Headers**:
+  ```
+  Authorization: Bearer ngo_token
+  ```
+- **Success Response** (200):
+  ```json
+  {
+      "success": true,
+      "message": "Volunteer removed successfully",
+      "data": {
+          "volunteerId": "volunteer_id",
+          "name": "John Doe",
+          "email": "volunteer@example.com"
+      }
+  }
+  ```
+
+This API documentation provides a comprehensive guide to the volunteer management endpoints in the PashuRakshak system. 

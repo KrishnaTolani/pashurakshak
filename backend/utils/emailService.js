@@ -209,9 +209,60 @@ const sendRegistrationEmail = async (email, ngoName) => {
   return await sendEmail(mailOptions);
 };
 
+// Send volunteer credentials
+const sendVolunteerCredentials = async (email, password, volunteerName, ngoName) => {
+  const loginUrl = process.env.FRONTEND_URL 
+    ? `${process.env.FRONTEND_URL}/volunteer/login` 
+    : 'http://localhost:3000/volunteer/login';
+
+  const mailOptions = {
+    from: '"Pashurakshak NGO" <sih.pravaah@gmail.com>',
+    to: email,
+    subject: '🎉 Welcome to Pashurakshak - Volunteer Registration',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #28a745; text-align: center;">Welcome to Pashurakshak! 🎊</h1>
+        <h2 style="color: #333; text-align: center;">You've been registered as a Volunteer</h2>
+        
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
+          <p style="color: #333;">Dear <strong>${volunteerName}</strong>,</p>
+          <p style="color: #333;">You have been registered as a volunteer for <strong>${ngoName}</strong>. You can now access your dashboard using the following credentials:</p>
+        </div>
+        
+        <div style="background-color: #e8f5e9; padding: 20px; border-radius: 5px; margin: 20px 0;">
+          <h3 style="color: #2e7d32; text-align: center;">Your Login Credentials</h3>
+          <p style="color: #333; text-align: center;"><strong>Email:</strong> ${email}</p>
+          <p style="color: #333; text-align: center;"><strong>Password:</strong> ${password}</p>
+        </div>
+        
+        <div style="background-color: #fff3e0; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <p style="color: #e65100; margin: 0;"><strong>Important:</strong> Please change your password after your first login.</p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+          <a href="${loginUrl}" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Login to Dashboard</a>
+        </div>
+        
+        <div style="margin-top: 30px; text-align: center; color: #666;">
+          <p>Best regards,<br><strong>Team ${ngoName}</strong></p>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    await gmailTransporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error('Error sending volunteer credentials email:', error);
+    return false;
+  }
+};
+
 module.exports = {
   sendApprovalEmail,
   sendRejectionEmail,
   sendStatusUpdateEmail,
-  sendRegistrationEmail
+  sendRegistrationEmail,
+  sendVolunteerCredentials
 }; 
